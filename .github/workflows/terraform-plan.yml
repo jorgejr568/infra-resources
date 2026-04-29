@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "terraform/projects/**"
+      - "terraform/**"
       - ".github/workflows/terraform-plan.yml"
       - ".github/workflows/terraform-apply.yml"
 
@@ -19,6 +19,9 @@ jobs:
     concurrency:
       group: terraform-plan-${{ github.ref }}
       cancel-in-progress: true
+    defaults:
+      run:
+        working-directory: terraform
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,48 +41,22 @@ jobs:
 
       - name: terraform fmt
         id: fmt
-        run: terraform fmt -check -recursive terraform/projects
+        run: terraform fmt -check -recursive
         continue-on-error: true
 
-      - name: terraform plan (per project)
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform validate
+        run: terraform validate -no-color
+
+      - name: terraform plan
         id: plan
-        shell: bash
         run: |
           set +e
-          overall_exit=0
-          : > plan-summary.md
-          for dir in terraform/projects/*/; do
-            project="$(basename "$dir")"
-            echo "::group::plan $project"
-            (
-              cd "$dir"
-              terraform init -input=false
-              terraform validate -no-color
-              terraform plan -no-color -input=false -out=tfplan
-            ) > "$dir/plan.txt" 2>&1
-            ec=$?
-            cat "$dir/plan.txt"
-            echo "::endgroup::"
-
-            {
-              echo "## \`$project\` (exit $ec)"
-              echo
-              echo "<details><summary>Plan output</summary>"
-              echo
-              echo '```hcl'
-              tail -c 60000 "$dir/plan.txt"
-              echo '```'
-              echo
-              echo "</details>"
-              echo
-            } >> plan-summary.md
-
-            if [[ "$ec" != "0" && "$ec" != "2" ]]; then
-              overall_exit=$ec
-            fi
-          done
-          echo "exitcode=$overall_exit" >> "$GITHUB_OUTPUT"
-          exit 0
+          terraform plan -no-color -input=false -out=tfplan > plan.txt 2>&1
+          echo "exitcode=$?" >> "$GITHUB_OUTPUT"
+          cat plan.txt
 
       - name: Comment plan on PR
         if: always()
@@ -90,10 +67,10 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let summary = '(no plan output)';
-            try { summary = fs.readFileSync('plan-summary.md', 'utf8'); } catch (_) {}
+            let plan = '(no plan output)';
+            try { plan = fs.readFileSync('terraform/plan.txt', 'utf8'); } catch (_) {}
             const max = 60000;
-            if (summary.length > max) summary = summary.slice(0, max) + '\n\n…(truncated)';
+            if (plan.length > max) plan = plan.slice(0, max) + '\n\n…(truncated)';
 
             const body = [
               '### Terraform plan',
@@ -101,7 +78,13 @@ jobs:
               `- **fmt:** \`${process.env.FMT_OUTCOME}\``,
               `- **plan exit code:** \`${process.env.PLAN_EXIT}\` (0 = no changes, 2 = changes pending)`,
               '',
-              summary,
+              '<details><summary>Plan output</summary>',
+              '',
+              '```hcl',
+              plan,
+              '```',
+              '',
+              '</details>',
             ].join('\n');
 
             await github.rest.issues.createComment({
@@ -120,5 +103,5 @@ jobs:
       - name: Fail if fmt drift
         if: steps.fmt.outcome == 'failure'
         run: |
-          echo "terraform fmt drift detected. Run 'terraform fmt -recursive terraform/projects' locally."
+          echo "terraform fmt drift detected. Run 'terraform fmt -recursive' inside terraform/ locally."
           exit 1

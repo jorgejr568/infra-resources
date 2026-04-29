@@ -9,42 +9,56 @@
 ```
 .
 ├── .github/workflows/             # CI/CD entrypoints
-├── terraform/
+├── terraform/                     # the one Terraform root module
+│   ├── versions.tf                # required terraform / providers
+│   ├── providers.tf               # AWS provider config + default tags
+│   ├── backend.tf                 # remote state (S3 + DynamoDB)
+│   ├── variables.tf               # root inputs
+│   ├── outputs.tf                 # surfaces module outputs to the root
+│   ├── main.tf                    # `module "<project>" { source = "./projects/<project>" }`
 │   └── projects/
-│       └── <project>/             # one Terraform root module per project
+│       └── <project>/             # one child module per application/project
+│           ├── s3.tf              # bucket(s) for this project
+│           ├── iam.tf             # user(s) and policies for this project
+│           └── outputs.tf         # outputs the root module re-exports
 ├── scripts/                       # one-off operational scripts
 ├── docs/                          # design + decision records
 ├── .tool-versions                 # tfenv / asdf hint (terraform version)
 └── README.md                      # quick-start for humans
 ```
 
-### One root module per project
+### One root module, many project sub-modules
 
-Resources are organized by **project** under `terraform/projects/<project>/`. Each project is its own Terraform root module with:
-- Its own state file (key: `projects/<project>/terraform.tfstate` in the shared state bucket).
-- Its own provider config and variables.
-- Its own apply lifecycle — projects can be planned and applied independently.
+There is **one** Terraform root module, at `terraform/`, with **one** state file. Inside it, resources are grouped per application under `terraform/projects/<project>/` purely as a way to keep files organized — each project is a Terraform child module, not its own root module. They share the root's provider, backend, and state.
 
-Why split this way:
-- **Blast radius:** a broken plan in one project never blocks another.
-- **State size:** state stays small and operations stay fast.
-- **Ownership:** when teams or contexts diverge, projects can be moved or restricted independently.
+Why this shape:
+- **One state, one apply.** A change in one project gets planned and applied in the same run as everything else. No risk of drift between separately-applied projects.
+- **File-level context.** Browsing `terraform/projects/hooks-fyi/` shows everything that belongs to the `hooks-fyi` app and nothing else.
+- **Simple CI.** The workflows run a single `terraform init/plan/apply` against `terraform/`. Adding a project is a folder + a `module` block in `main.tf` — no CI changes.
 
-Adding a new project = create `terraform/projects/<new-project>/` with its own `versions.tf`, `providers.tf`, `backend.tf` (with a unique state key), `variables.tf`, and resource files. Then add the project name to the matrix in both workflows (see CI section).
+Trade-off: blast radius is larger (one bad apply affects everything in this repo). For our scale that's acceptable; if it becomes a concern later we'd promote a project into its own root module with its own state.
+
+### Adding a project
+
+1. Create `terraform/projects/<new-project>/` with `s3.tf`, `iam.tf`, `outputs.tf`, etc. No `backend.tf`, no `providers.tf` — the root module supplies those.
+2. Add to `terraform/main.tf`:
+   ```hcl
+   module "<new_project>" {
+     source = "./projects/<new-project>"
+   }
+   ```
+3. Re-export anything you need at the root by adding to `terraform/outputs.tf`.
 
 ### Files inside a project
 
 | File | Responsibility |
 |------|----------------|
-| `versions.tf`  | Terraform + provider version constraints |
-| `providers.tf` | `aws` provider config + default tags |
-| `backend.tf`   | S3 + DynamoDB remote state (project-specific key) |
-| `variables.tf` | Input variables (region, etc.) |
-| `outputs.tf`   | Cross-cutting outputs (most outputs live next to their resource) |
 | `s3.tf`        | All S3 buckets and their hardening (encryption, public-access-block, versioning, ownership) |
 | `iam.tf`       | All IAM users, policies, attachments, access keys |
+| `outputs.tf`   | Outputs the root module needs to re-export |
+| `variables.tf` | (optional) inputs the root passes in |
 
-Within a project, resources are grouped by AWS service, not by feature. When a feature spans services (e.g. "request files" = bucket + user + policy), the pieces live in their service-appropriate file and are wired through Terraform references.
+Within a project, resources are grouped by AWS service, not by feature.
 
 ## Current projects
 
@@ -61,7 +75,7 @@ State is stored remotely in:
 - **Bucket:** `jorgejr568-aws-resources-tfstate` (versioned, AES256-encrypted, public access blocked).
 - **Lock table:** `aws-resources-tflock` (DynamoDB, on-demand billing).
 - **Region:** `us-east-1`.
-- **Key pattern:** `projects/<project>/terraform.tfstate`.
+- **Key:** `aws-resources.tfstate`.
 
 Both backend resources are created once via `scripts/bootstrap-backend.sh`. The script is idempotent so re-running is safe.
 
@@ -76,31 +90,36 @@ GitHub Actions authenticates to AWS using long-lived access keys for an IAM user
 | `AWS_ACCESS_KEY_ID`     | CI access key id |
 | `AWS_SECRET_ACCESS_KEY` | CI secret |
 
-The CI user is **not** the same as `hooks-fyi`. `hooks-fyi` is an application service account managed by Terraform and has only S3 read-write permissions to one bucket. The CI user is an account-level admin (or scoped to "manage S3 + IAM in this account") and is created out-of-band.
+The CI user is **not** the same as any project's service account (e.g. `hooks-fyi`). Project users are managed by Terraform with narrowly-scoped permissions; the CI user is broader and is created out-of-band.
 
 > **Future work:** Replace the CI access keys with GitHub OIDC + an IAM role (`role-to-assume`). This eliminates long-lived secrets.
 
 ## CI/CD flows
 
-Each workflow runs as a single job that loops over every directory under `terraform/projects/*` and processes them in sequence. Projects are organized as separate root modules for **file-level context** (each project has its own state, providers, and resources), but they ship together — one PR's plan workflow shows the diff for every project, and one merge applies every project's changes in order.
+Both workflows run in the `terraform/` directory. Because there is one root module, one `init/plan/apply` covers every project.
 
 ### Plan (on PR)
-Trigger: `pull_request` targeting `main`, when `terraform/projects/**` or workflow files change.
+Trigger: `pull_request` targeting `main`, when `terraform/**` or workflow files change.
 1. Checkout
 2. Configure AWS credentials
-3. `terraform fmt -check -recursive terraform/projects`
-4. For each `terraform/projects/<project>/`: `init`, `validate`, `plan -out=tfplan`
-5. Post one PR comment containing every project's plan output
+3. `terraform fmt -check -recursive`
+4. `terraform init`
+5. `terraform validate`
+6. `terraform plan -no-color -out=tfplan`
+7. Post the plan as a PR comment
 
 ### Apply (on merge / manual)
 Triggers:
-- `push` to `main` when `terraform/projects/**` or workflow files change.
+- `push` to `main` when `terraform/**` or workflow files change.
 - `workflow_dispatch` (manual run from the Actions tab).
 1. Checkout
 2. Configure AWS credentials
-3. For each `terraform/projects/<project>/`: `init`, `validate`, `plan -out=tfplan`, `apply tfplan`
+3. `terraform init`
+4. `terraform validate`
+5. `terraform plan -no-color -out=tfplan`
+6. `terraform apply -auto-approve tfplan`
 
-The apply loop is `set -euo pipefail`, so the first project that fails halts the run; later projects are not applied. A single repo-wide `concurrency` group keeps two simultaneous apply runs from racing.
+A single `concurrency: terraform-apply` group prevents two simultaneous applies from racing the state lock.
 
 ## Bootstrap order (one-time, per AWS account)
 
@@ -112,15 +131,15 @@ The apply loop is `set -euo pipefail`, so the first project that fails halts the
 ## Adding a new resource
 
 1. Branch off `main`.
-2. Decide which project it belongs to (or create a new one).
-3. Add or extend a file in `terraform/projects/<project>/` matching the AWS service (`s3.tf`, `iam.tf`, …).
-4. Open a PR. The plan workflow comments the diff per project.
+2. Decide which project it belongs to (or create a new project — see "Adding a project" above).
+3. Add or extend the appropriate `<service>.tf` under `terraform/projects/<project>/`.
+4. Open a PR. The plan workflow comments the diff.
 5. Get review, merge. The apply workflow rolls it out.
 
 ## Reading sensitive outputs
 
 ```bash
-cd terraform/projects/<project>
+cd terraform
 terraform init
 terraform output -raw <output_name>
 ```
