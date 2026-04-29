@@ -5,7 +5,6 @@ provider "aws" {
     tags = {
       ManagedBy = "terraform"
       Repo      = "aws-resources"
-      Project   = "hooks-fyi"
     }
   }
 }
