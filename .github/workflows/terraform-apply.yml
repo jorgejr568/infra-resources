@@ -6,12 +6,7 @@ on:
     paths:
       - "terraform/projects/**"
       - ".github/workflows/terraform-apply.yml"
-  workflow_dispatch:
-    inputs:
-      project:
-        description: "Project to apply (leave empty to apply all)"
-        required: false
-        default: ""
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -27,10 +22,6 @@ jobs:
     concurrency:
       group: terraform-apply-${{ matrix.project }}
       cancel-in-progress: false
-    if: >-
-      github.event_name != 'workflow_dispatch'
-      || inputs.project == ''
-      || inputs.project == matrix.project
     defaults:
       run:
         working-directory: terraform/projects/${{ matrix.project }}
