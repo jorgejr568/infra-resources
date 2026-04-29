@@ -16,10 +16,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: terraform-apply-${{ matrix.project }}
-  cancel-in-progress: false
-
 jobs:
   apply:
     name: apply (${{ matrix.project }})
@@ -28,6 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         project: [hooks-fyi]
+    concurrency:
+      group: terraform-apply-${{ matrix.project }}
+      cancel-in-progress: false
     if: >-
       github.event_name != 'workflow_dispatch'
       || inputs.project == ''

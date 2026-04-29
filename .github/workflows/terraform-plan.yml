@@ -12,10 +12,6 @@ permissions:
   contents: read
   pull-requests: write
 
-concurrency:
-  group: terraform-plan-${{ github.ref }}-${{ matrix.project }}
-  cancel-in-progress: true
-
 jobs:
   plan:
     name: plan (${{ matrix.project }})
@@ -24,6 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         project: [hooks-fyi]
+    concurrency:
+      group: terraform-plan-${{ github.ref }}-${{ matrix.project }}
+      cancel-in-progress: true
     defaults:
       run:
         working-directory: terraform/projects/${{ matrix.project }}
