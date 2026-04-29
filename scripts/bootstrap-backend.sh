@@ -11,7 +11,7 @@
 set -euo pipefail
 
 REGION="${AWS_REGION:-us-east-1}"
-STATE_BUCKET="${STATE_BUCKET:-aws-resources-tfstate}"
+STATE_BUCKET="${STATE_BUCKET:-jorgejr568-aws-resources-tfstate}"
 LOCK_TABLE="${LOCK_TABLE:-aws-resources-tflock}"
 
 echo "Region:       $REGION"
