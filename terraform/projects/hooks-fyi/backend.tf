@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "hooks-fyi-tfstate"
+    bucket         = "aws-resources-tfstate"
     key            = "projects/hooks-fyi/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "hooks-fyi-tflock"
+    dynamodb_table = "aws-resources-tflock"
     encrypt        = true
   }
 }

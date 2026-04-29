@@ -58,14 +58,14 @@ Owns:
 ## State management
 
 State is stored remotely in:
-- **Bucket:** `hooks-fyi-tfstate` (versioned, AES256-encrypted, public access blocked).
-- **Lock table:** `hooks-fyi-tflock` (DynamoDB, on-demand billing).
+- **Bucket:** `aws-resources-tfstate` (versioned, AES256-encrypted, public access blocked).
+- **Lock table:** `aws-resources-tflock` (DynamoDB, on-demand billing).
 - **Region:** `us-east-1`.
 - **Key pattern:** `projects/<project>/terraform.tfstate`.
 
 Both backend resources are created once via `scripts/bootstrap-backend.sh`. The script is idempotent so re-running is safe.
 
-> ⚠ State contains sensitive values (notably IAM access key secrets). Read access to `hooks-fyi-tfstate` should be restricted to the same humans/automation that can apply this repo.
+> ⚠ State contains sensitive values (notably IAM access key secrets). Read access to `aws-resources-tfstate` should be restricted to the same humans/automation that can apply this repo.
 
 ## Authentication
 
