@@ -8,3 +8,16 @@ provider "aws" {
     }
   }
 }
+
+provider "aws" {
+  alias  = "hooks_fyi"
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      ManagedBy = "terraform"
+      Repo      = "aws-resources"
+      Project   = "hooks-fyi"
+    }
+  }
+}
