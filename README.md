@@ -18,7 +18,7 @@ Terraform-managed AWS resources for the `hooks-fyi` ecosystem and beyond, applie
 
 ## Layout
 
-- `terraform/` — root Terraform module (all current resources).
-- `.github/workflows/` — CI/CD (`terraform-plan.yml` for PRs, `terraform-apply.yml` for `main`).
+- `terraform/projects/<project>/` — one Terraform root module per project (own state, applied independently). Current projects: `hooks-fyi`.
+- `.github/workflows/` — CI/CD (`terraform-plan.yml` for PRs, `terraform-apply.yml` for `main`). Workflows fan out across all projects via a matrix.
 - `scripts/` — one-off operational scripts (state backend bootstrap).
 - `docs/` — architecture and decision docs.
