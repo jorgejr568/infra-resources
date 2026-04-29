@@ -82,31 +82,25 @@ The CI user is **not** the same as `hooks-fyi`. `hooks-fyi` is an application se
 
 ## CI/CD flows
 
-Both workflows use a `matrix` over the list of projects so all projects are checked / applied per run. The matrix is currently hardcoded; switch to dynamic discovery (`find terraform/projects -mindepth 1 -maxdepth 1 -type d`) when the list grows.
+Each workflow runs as a single job that loops over every directory under `terraform/projects/*` and processes them in sequence. Projects are organized as separate root modules for **file-level context** (each project has its own state, providers, and resources), but they ship together — one PR's plan workflow shows the diff for every project, and one merge applies every project's changes in order.
 
 ### Plan (on PR)
 Trigger: `pull_request` targeting `main`, when `terraform/projects/**` or workflow files change.
-Per project in the matrix:
 1. Checkout
 2. Configure AWS credentials
-3. `terraform fmt -check -recursive`
-4. `terraform init`
-5. `terraform validate`
-6. `terraform plan -no-color -out=tfplan`
-7. Comment plan output on the PR (one comment per project)
+3. `terraform fmt -check -recursive terraform/projects`
+4. For each `terraform/projects/<project>/`: `init`, `validate`, `plan -out=tfplan`
+5. Post one PR comment containing every project's plan output
 
 ### Apply (on merge / manual)
 Triggers:
 - `push` to `main` when `terraform/projects/**` or workflow files change.
-- `workflow_dispatch` (manual run from the Actions tab; lets you target a specific project).
-Per project in the matrix:
+- `workflow_dispatch` (manual run from the Actions tab).
 1. Checkout
 2. Configure AWS credentials
-3. `terraform init`
-4. `terraform plan -no-color -out=tfplan`
-5. `terraform apply -auto-approve tfplan`
+3. For each `terraform/projects/<project>/`: `init`, `validate`, `plan -out=tfplan`, `apply tfplan`
 
-Apply runs serially per project via a GitHub Actions `concurrency` group keyed to the workflow + project so two merges can't race the same project's state.
+The apply loop is `set -euo pipefail`, so the first project that fails halts the run; later projects are not applied. A single repo-wide `concurrency` group keeps two simultaneous apply runs from racing.
 
 ## Bootstrap order (one-time, per AWS account)
 

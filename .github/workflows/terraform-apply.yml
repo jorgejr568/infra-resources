@@ -13,18 +13,11 @@ permissions:
 
 jobs:
   apply:
-    name: apply (${{ matrix.project }})
+    name: apply
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [hooks-fyi]
     concurrency:
-      group: terraform-apply-${{ matrix.project }}
+      group: terraform-apply
       cancel-in-progress: false
-    defaults:
-      run:
-        working-directory: terraform/projects/${{ matrix.project }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,14 +35,18 @@ jobs:
           terraform_version: 1.9.8
           terraform_wrapper: false
 
-      - name: terraform init
-        run: terraform init -input=false
-
-      - name: terraform validate
-        run: terraform validate -no-color
-
-      - name: terraform plan
-        run: terraform plan -no-color -input=false -out=tfplan
-
-      - name: terraform apply
-        run: terraform apply -auto-approve -input=false tfplan
+      - name: terraform apply (per project)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in terraform/projects/*/; do
+            project="$(basename "$dir")"
+            echo "::group::apply $project"
+            pushd "$dir" >/dev/null
+            terraform init -input=false
+            terraform validate -no-color
+            terraform plan -no-color -input=false -out=tfplan
+            terraform apply -auto-approve -input=false tfplan
+            popd >/dev/null
+            echo "::endgroup::"
+          done
