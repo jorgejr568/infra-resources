@@ -77,6 +77,16 @@ output "rentivo_zone_id" {
   value       = module.rentivo.rentivo_zone_id
 }
 
+output "jorgejunior_dev_zone_id" {
+  description = "Cloudflare zone ID for jorgejunior.dev."
+  value       = module.jorgejunior.jorgejunior_dev_zone_id
+}
+
+output "j_jr_app_zone_id" {
+  description = "Cloudflare zone ID for j-jr.app."
+  value       = module.jorgejunior.j_jr_app_zone_id
+}
+
 output "cloudflare_account_id" {
   description = "Cloudflare account ID (passthrough from var.cloudflare_account_id)."
   value       = var.cloudflare_account_id
