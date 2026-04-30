@@ -32,3 +32,14 @@ module "jorgejunior" {
     cloudflare = cloudflare
   }
 }
+
+module "eic_seminarios" {
+  source = "./projects/eic-seminarios"
+
+  server_ipv4 = var.server_ipv4
+  server_ipv6 = var.server_ipv6
+
+  providers = {
+    cloudflare = cloudflare
+  }
+}

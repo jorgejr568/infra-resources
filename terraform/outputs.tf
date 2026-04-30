@@ -87,6 +87,11 @@ output "j_jr_app_zone_id" {
   value       = module.jorgejunior.j_jr_app_zone_id
 }
 
+output "eic_seminarios_zone_id" {
+  description = "Cloudflare zone ID for eic-seminarios.com."
+  value       = module.eic_seminarios.eic_seminarios_zone_id
+}
+
 output "cloudflare_account_id" {
   description = "Cloudflare account ID (passthrough from var.cloudflare_account_id)."
   value       = var.cloudflare_account_id
