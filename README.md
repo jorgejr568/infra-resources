@@ -1,6 +1,8 @@
-# aws-resources
+# infra-resources
 
-Terraform-managed AWS resources for the `hooks-fyi` ecosystem and beyond, applied via GitHub Actions.
+Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflare DNS), applied via GitHub Actions.
+
+> Repo is currently named `aws-resources` on GitHub; rename to `infra-resources` is a separate manual step (see [`docs/superpowers/plans/2026-04-30-cutover-runbook.md`](docs/superpowers/plans/2026-04-30-cutover-runbook.md)).
 
 > Full documentation lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). This README is a quick-start.
 
@@ -10,15 +12,20 @@ Terraform-managed AWS resources for the `hooks-fyi` ecosystem and beyond, applie
    ```bash
    ./scripts/bootstrap-backend.sh
    ```
-2. **Configure GitHub secrets** on this repo:
+2. **Configure GitHub secrets:**
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
-3. **Push to `main`** — the apply workflow will run automatically.
-4. **For changes thereafter**, open a PR. The plan workflow comments the diff. Merge to apply.
+   - `CLOUDFLARE_API_TOKEN`
+3. **Configure GitHub repo variables:**
+   - `SERVER_IPV4`, `SERVER_IPV6` — origin server IPs proxied by Cloudflare
+   - `CLOUDFLARE_ACCOUNT_ID`
+4. **Push to `main`** — the apply workflow runs automatically.
+5. **For changes thereafter**, open a PR. The plan workflow comments the diff. Merge to apply.
 
 ## Layout
 
-- `terraform/projects/<project>/` — one Terraform root module per project (own state, applied independently). Current projects: `hooks-fyi`.
-- `.github/workflows/` — CI/CD (`terraform-plan.yml` for PRs, `terraform-apply.yml` for `main`). Workflows fan out across all projects via a matrix.
-- `scripts/` — one-off operational scripts (state backend bootstrap).
-- `docs/` — architecture and decision docs.
+- `terraform/projects/<project>/` — one Terraform child module per project. Each project owns its AWS *and* its Cloudflare resources. Projects: `eic-seminarios`, `hooks-fyi`, `jorgejunior` (jorgejunior.dev + j-jr.app), `joy-living`, `rentivo`.
+- `terraform/` — root module: `main.tf`, `providers.tf`, `versions.tf`, `backend.tf`, `outputs.tf`, `variables.tf`. One state for everything.
+- `.github/workflows/` — `terraform-plan.yml` (PR), `terraform-apply.yml` (main).
+- `scripts/` — operational scripts (state backend bootstrap).
+- `docs/` — architecture and decision docs, plus implementation plans under `docs/superpowers/plans/`.

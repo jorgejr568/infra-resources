@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`aws-resources` is the single source of truth for AWS infrastructure managed under the `jorgejr568` account, applied through CI/CD. Every change to AWS state goes through a PR, a `terraform plan`, a review, and a `terraform apply` triggered by merging to `main`.
+This repo is the single source of truth for the infrastructure managed under the `jorgejr568` account — AWS resources and Cloudflare DNS — applied through CI/CD. Every change goes through a PR, a `terraform plan`, a review, and a `terraform apply` triggered by merging to `main`. AWS and Cloudflare share one root module and one state file; per-project child modules group resources by application/domain.
 
 ## Repository layout
 
@@ -53,21 +53,35 @@ Trade-off: blast radius is larger (one bad apply affects everything in this repo
 
 | File | Responsibility |
 |------|----------------|
-| `s3.tf`        | All S3 buckets and their hardening (encryption, public-access-block, versioning, ownership) |
-| `iam.tf`       | All IAM users, policies, attachments, access keys |
-| `outputs.tf`   | Outputs the root module needs to re-export |
-| `variables.tf` | (optional) inputs the root passes in |
+| `s3.tf`         | All S3 buckets and their hardening (encryption, public-access-block, versioning, ownership) |
+| `iam.tf`        | All IAM users, policies, attachments, access keys |
+| `ses.tf`        | SES domain identity + DKIM, if the project sends email |
+| `cloudflare.tf` | Cloudflare zone lookups + DNS records for the project's zone(s) |
+| `variables.tf`  | (optional) inputs the root passes in (e.g. `server_ipv4`, `server_ipv6`) |
+| `outputs.tf`    | Outputs the root module re-exports (some projects co-locate outputs in their resource files) |
+
+**Cloudflare DNS belongs to the project that owns the zone.** A project can be CF-only (e.g. `joy-living` has no AWS), AWS-only, or both (e.g. `rentivo` has SES + S3 + CF, with CF DKIM CNAMEs wired directly to `aws_ses_domain_dkim.rentivo.dkim_tokens` so there are no hardcoded tokens).
 
 Within a project, resources are grouped by AWS service, not by feature.
 
 ## Current projects
 
 ### `hooks-fyi`
+- AWS: `hooks-fyi-request-files` S3 bucket (versioned, AES256-encrypted, all public access blocked); `hooks-fyi` IAM user with read-write access to the bucket; access key surfaced via sensitive outputs.
+- Cloudflare: `hooks.fyi` zone — `@`, `www` proxied A/AAAA.
 
-Owns:
-- `hooks-fyi-request-files` S3 bucket (versioned, AES256-encrypted, all public access blocked).
-- `hooks-fyi` IAM user with read-write access scoped to the above bucket.
-- An access key for `hooks-fyi`, exposed via sensitive Terraform outputs.
+### `rentivo`
+- AWS: S3 bucket `rentivo-files`, IAM user, SES domain identity + DKIM.
+- Cloudflare: `rentivo.com.br` zone — `@`/`www` proxied A/AAAA, DMARC TXT, three SES DKIM CNAMEs (sourced from `aws_ses_domain_dkim` output), `mail` MX + SPF TXT.
+
+### `jorgejunior`
+- Cloudflare only: `jorgejunior.dev` (16 proxied subdomains + SES bounce MX + Mailgun MX) and `j-jr.app` (8 proxied subdomains + 2 Vercel CNAMEs).
+
+### `eic-seminarios`
+- Cloudflare only: `eic-seminarios.com` zone — `v2` proxied A/AAAA.
+
+### `joy-living`
+- Cloudflare only: `joyliving.com.br` zone — `@`, `www`, `api` proxied A/AAAA.
 
 ## State management
 
@@ -93,6 +107,16 @@ GitHub Actions authenticates to AWS using long-lived access keys for an IAM user
 The CI user is **not** the same as any project's service account (e.g. `hooks-fyi`). Project users are managed by Terraform with narrowly-scoped permissions; the CI user is broader and is created out-of-band.
 
 > **Future work:** Replace the CI access keys with GitHub OIDC + an IAM role (`role-to-assume`). This eliminates long-lived secrets.
+
+### Cloudflare authentication
+| Secret / Var | Purpose |
+|--------------|---------|
+| `CLOUDFLARE_API_TOKEN` (secret) | Cloudflare API token consumed by the cloudflare provider |
+| `SERVER_IPV4` (var)             | Origin IPv4 used by all proxied A records |
+| `SERVER_IPV6` (var)             | Origin IPv6 used by all proxied AAAA records |
+| `CLOUDFLARE_ACCOUNT_ID` (var)   | Cloudflare account ID (currently passthrough output only) |
+
+These are surfaced to Terraform via `TF_VAR_*` env in the workflows. The values are not sensitive (server IPs are published in DNS; the account ID is non-secret) but live outside the repo to avoid hardcoding environment-specific values.
 
 ## CI/CD flows
 
