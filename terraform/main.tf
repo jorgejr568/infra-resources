@@ -43,3 +43,14 @@ module "eic_seminarios" {
     cloudflare = cloudflare
   }
 }
+
+module "joy_living" {
+  source = "./projects/joy-living"
+
+  server_ipv4 = var.server_ipv4
+  server_ipv6 = var.server_ipv6
+
+  providers = {
+    cloudflare = cloudflare
+  }
+}
