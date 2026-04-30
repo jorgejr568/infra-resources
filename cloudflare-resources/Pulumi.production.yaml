@@ -1,0 +1,7 @@
+config:
+  server:ipv4:
+    secure: AAABADH/YlG6J9tv8EbFwcP7yc0wrGLlFzPejhcYI7JHYpozs9izY+PFBn47
+  server:ipv6:
+    secure: AAABAMymbowixpw7dwOjtuq7iPShKKwuOsyocrWyoXLe9Y10Lkhdt+NYCuLGWuaSAURaYQ==
+  cf:accountId:
+    secure: AAABAJ/L6mYLWN50/JxxvkuFPnaDDS582P6nl9o1F9SCjsMdozSm2yPhrpEPZ0s2sbg4ILHMfztwCc0jZi5H3A==
