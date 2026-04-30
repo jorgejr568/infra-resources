@@ -2,8 +2,6 @@
 
 Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflare DNS), applied via GitHub Actions.
 
-> Repo is currently named `aws-resources` on GitHub; rename to `infra-resources` is a separate manual step (see [`docs/superpowers/plans/2026-04-30-cutover-runbook.md`](docs/superpowers/plans/2026-04-30-cutover-runbook.md)).
-
 > Full documentation lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). This README is a quick-start.
 
 ## Quick start
