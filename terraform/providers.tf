@@ -34,3 +34,8 @@ provider "aws" {
     }
   }
 }
+
+provider "cloudflare" {
+  # API token comes from CLOUDFLARE_API_TOKEN env var in CI; no per-project
+  # alias because Cloudflare has no provider-level tagging concept.
+}
