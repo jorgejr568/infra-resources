@@ -1,20 +1,34 @@
-name: terraform-plan
+name: pr-checks
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "terraform/**"
-      - ".github/workflows/terraform-plan.yml"
-      - ".github/workflows/terraform-apply.yml"
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  plan:
-    name: plan
+  changes:
+    name: detect-changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+              - '.github/workflows/pr-checks.yml'
+              - '.github/workflows/terraform-apply.yml'
+
+  terraform-plan:
+    name: terraform-plan
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: terraform-plan-${{ github.ref }}
@@ -109,4 +123,27 @@ jobs:
         if: steps.fmt.outcome == 'failure'
         run: |
           echo "terraform fmt drift detected. Run 'terraform fmt -recursive' inside terraform/ locally."
+          exit 1
+
+  plan:
+    name: plan
+    needs: [changes, terraform-plan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify plan succeeded or was skipped
+        run: |
+          changes_result="${{ needs.changes.result }}"
+          plan_result="${{ needs.terraform-plan.result }}"
+          echo "changes job:        $changes_result"
+          echo "terraform-plan job: $plan_result"
+          if [[ "$changes_result" != "success" ]]; then
+            echo "FAIL: changes detection did not succeed."
+            exit 1
+          fi
+          if [[ "$plan_result" == "success" || "$plan_result" == "skipped" ]]; then
+            echo "PASS: terraform-plan was $plan_result."
+            exit 0
+          fi
+          echo "FAIL: terraform-plan result was $plan_result."
           exit 1
