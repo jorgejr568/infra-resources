@@ -72,6 +72,11 @@ output "hooks_fyi_zone_id" {
   value       = module.hooks_fyi.hooks_fyi_zone_id
 }
 
+output "rentivo_zone_id" {
+  description = "Cloudflare zone ID for rentivo.com.br."
+  value       = module.rentivo.rentivo_zone_id
+}
+
 output "cloudflare_account_id" {
   description = "Cloudflare account ID (passthrough from var.cloudflare_account_id)."
   value       = var.cloudflare_account_id

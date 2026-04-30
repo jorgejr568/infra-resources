@@ -13,7 +13,11 @@ module "hooks_fyi" {
 module "rentivo" {
   source = "./projects/rentivo"
 
+  server_ipv4 = var.server_ipv4
+  server_ipv6 = var.server_ipv6
+
   providers = {
-    aws = aws.rentivo
+    aws        = aws.rentivo
+    cloudflare = cloudflare
   }
 }
