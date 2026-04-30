@@ -6,6 +6,7 @@ on:
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-apply.yml"
+      - ".github/workflows/pr-checks.yml"
   workflow_dispatch: {}
 
 permissions:

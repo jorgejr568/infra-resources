@@ -3,7 +3,7 @@ data "cloudflare_zone" "eic_seminarios" {
 }
 
 locals {
-  eic_seminarios_proxied_subdomains = toset(["v2"])
+  eic_seminarios_proxied_subdomains = toset(["beta"])
 }
 
 resource "cloudflare_record" "eic_seminarios_a" {
