@@ -66,3 +66,38 @@ output "rentivo_ses_dkim_tokens" {
   description = "SES DKIM tokens (publish three CNAMEs: <token>._domainkey.rentivo.com.br -> <token>.dkim.amazonses.com)."
   value       = module.rentivo.rentivo_ses_dkim_tokens
 }
+
+output "hooks_fyi_zone_id" {
+  description = "Cloudflare zone ID for hooks.fyi."
+  value       = module.hooks_fyi.hooks_fyi_zone_id
+}
+
+output "rentivo_zone_id" {
+  description = "Cloudflare zone ID for rentivo.com.br."
+  value       = module.rentivo.rentivo_zone_id
+}
+
+output "jorgejunior_dev_zone_id" {
+  description = "Cloudflare zone ID for jorgejunior.dev."
+  value       = module.jorgejunior.jorgejunior_dev_zone_id
+}
+
+output "j_jr_app_zone_id" {
+  description = "Cloudflare zone ID for j-jr.app."
+  value       = module.jorgejunior.j_jr_app_zone_id
+}
+
+output "eic_seminarios_zone_id" {
+  description = "Cloudflare zone ID for eic-seminarios.com."
+  value       = module.eic_seminarios.eic_seminarios_zone_id
+}
+
+output "joy_living_zone_id" {
+  description = "Cloudflare zone ID for joyliving.com.br."
+  value       = module.joy_living.joy_living_zone_id
+}
+
+output "cloudflare_account_id" {
+  description = "Cloudflare account ID (passthrough from var.cloudflare_account_id)."
+  value       = var.cloudflare_account_id
+}
