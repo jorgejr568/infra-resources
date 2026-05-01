@@ -3,7 +3,7 @@ data "cloudflare_zone" "eic_seminarios" {
 }
 
 locals {
-  eic_seminarios_proxied_subdomains = toset(["beta", "mail.beta", "s3.beta", "console.s3.beta"])
+  eic_seminarios_proxied_subdomains = toset(["beta", "mail-beta", "s3-beta", "console-s3-beta"])
 }
 
 resource "cloudflare_record" "eic_seminarios_a" {
