@@ -29,3 +29,12 @@ updates:
     labels:
       - "dependencies"
       - "terraform"
+    # Major-version provider bumps are migrations, not drive-by changes
+    # (see CONTRIBUTING.md "Out of bounds"). Allow minor / patch only.
+    ignore:
+      - dependency-name: "cloudflare/cloudflare"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "hashicorp/aws"
+        update-types:
+          - "version-update:semver-major"
