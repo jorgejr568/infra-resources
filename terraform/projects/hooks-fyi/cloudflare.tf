@@ -1,5 +1,7 @@
 data "cloudflare_zone" "hooks_fyi" {
-  name = "hooks.fyi"
+  filter = {
+    name = "hooks.fyi"
+  }
 }
 
 module "cf_proxied_hooks_fyi" {

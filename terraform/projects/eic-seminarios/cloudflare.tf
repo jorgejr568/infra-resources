@@ -1,5 +1,7 @@
 data "cloudflare_zone" "eic_seminarios" {
-  name = "eic-seminarios.com"
+  filter = {
+    name = "eic-seminarios.com"
+  }
 }
 
 module "cf_proxied_eic_seminarios" {

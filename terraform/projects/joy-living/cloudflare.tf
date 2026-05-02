@@ -1,5 +1,7 @@
 data "cloudflare_zone" "joy_living" {
-  name = "joyliving.com.br"
+  filter = {
+    name = "joyliving.com.br"
+  }
 }
 
 module "cf_proxied_joy_living" {
