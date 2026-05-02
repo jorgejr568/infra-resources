@@ -9,36 +9,6 @@ data "cloudflare_zone" "j_jr_app" {
 locals {
   vercel_cname_target = "cname.vercel-dns.com"
 
-  jorgejunior_dev_proxied_subdomains = toset([
-    "www", "@",
-    "wheregoes",
-    "api",
-    "dns",
-    "estimates",
-    "exchange-register",
-    "me",
-    "meta",
-    "nova",
-    "pdf",
-    "s3", "s3-manager",
-    "flux",
-    "vscode",
-    "land",
-  ])
-
-  j_jr_app_proxied_subdomains = toset([
-    "@", "www",
-    "panela-magica-api", "tourquest",
-    "wheregoes-api", "wheregoes",
-    "yt",
-    "flux",
-  ])
-
-  j_jr_app_vercel_subdomains = toset([
-    "worktrackr",
-    "panela-magica",
-  ])
-
   jorgejunior_dev_mx_records = {
     bounces_ses = {
       name     = "bounces"
@@ -56,28 +26,70 @@ locals {
       priority = 20
     }
   }
+
+  j_jr_app_vercel_subdomains = toset([
+    "worktrackr",
+    "panela-magica",
+  ])
 }
 
-resource "cloudflare_record" "jorgejunior_dev_a" {
-  for_each = local.jorgejunior_dev_proxied_subdomains
+module "cf_proxied_jorgejunior_dev" {
+  source = "../../modules/cloudflare-default-server-subdomains"
 
   zone_id = data.cloudflare_zone.jorgejunior_dev.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
+  subdomains = toset([
+    "www", "@",
+    "wheregoes",
+    "api",
+    "dns",
+    "estimates",
+    "exchange-register",
+    "me",
+    "meta",
+    "nova",
+    "pdf",
+    "s3", "s3-manager",
+    "flux",
+    "vscode",
+    "land",
+  ])
+  ipv4 = var.server_ipv4
+  ipv6 = var.server_ipv6
 }
 
-resource "cloudflare_record" "jorgejunior_dev_aaaa" {
-  for_each = local.jorgejunior_dev_proxied_subdomains
+moved {
+  from = cloudflare_record.jorgejunior_dev_a
+  to   = module.cf_proxied_jorgejunior_dev.cloudflare_record.a
+}
 
-  zone_id = data.cloudflare_zone.jorgejunior_dev.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.jorgejunior_dev_aaaa
+  to   = module.cf_proxied_jorgejunior_dev.cloudflare_record.aaaa
+}
+
+module "cf_proxied_j_jr_app" {
+  source = "../../modules/cloudflare-default-server-subdomains"
+
+  zone_id = data.cloudflare_zone.j_jr_app.id
+  subdomains = toset([
+    "@", "www",
+    "panela-magica-api", "tourquest",
+    "wheregoes-api", "wheregoes",
+    "yt",
+    "flux",
+  ])
+  ipv4 = var.server_ipv4
+  ipv6 = var.server_ipv6
+}
+
+moved {
+  from = cloudflare_record.j_jr_app_a
+  to   = module.cf_proxied_j_jr_app.cloudflare_record.a
+}
+
+moved {
+  from = cloudflare_record.j_jr_app_aaaa
+  to   = module.cf_proxied_j_jr_app.cloudflare_record.aaaa
 }
 
 resource "cloudflare_record" "jorgejunior_dev_mx" {
@@ -89,28 +101,6 @@ resource "cloudflare_record" "jorgejunior_dev_mx" {
   content  = each.value.content
   priority = each.value.priority
   comment  = "Terraform managed record"
-}
-
-resource "cloudflare_record" "j_jr_app_a" {
-  for_each = local.j_jr_app_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.j_jr_app.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
-}
-
-resource "cloudflare_record" "j_jr_app_aaaa" {
-  for_each = local.j_jr_app_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.j_jr_app.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
 }
 
 resource "cloudflare_record" "j_jr_app_vercel" {

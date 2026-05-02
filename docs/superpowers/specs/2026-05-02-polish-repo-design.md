@@ -20,42 +20,43 @@ Tighten the repo on five axes — DRY refactor of repeated Cloudflare DNS patter
 
 ---
 
-## Section 1 — DRY: Cloudflare proxied subdomain module
+## Section 1 — DRY: Cloudflare default-server subdomain module
 
 ### Problem
 
-Five projects each repeat the same pattern: `for_each` over a `toset` of subdomain names, emitting one `cloudflare_record` of type `A` plus one of type `AAAA`, both proxied, both pointing at `var.server_ipv4` / `var.server_ipv6`, both commented "Terraform managed record". Total: 10 nearly-identical resource blocks across 5 files.
+Five projects each repeat the same pattern: `for_each` over a `toset` of subdomain names, emitting one `cloudflare_record` of type `A` plus one of type `AAAA`, both pointing at `var.server_ipv4` / `var.server_ipv6`, both commented "Terraform managed record". Most are proxied; `eic-seminarios` has one unproxied subset (`s3-beta`) that follows the same shape with a different `proxied` flag and a different comment.
 
 ### Solution
 
-Introduce a small reusable child module at `terraform/modules/cloudflare-proxied-subdomains/`.
+Introduce a small reusable child module at `terraform/modules/cloudflare-default-server-subdomains/`. The module emits the A+AAAA pair pointing at the default origin server; `proxied` is an optional boolean (default `true`) so both proxied and unproxied callers can share it.
 
 **Interface:**
 
 ```hcl
 module "cf_proxied_<scope>" {
-  source = "../../modules/cloudflare-proxied-subdomains"
+  source = "../../modules/cloudflare-default-server-subdomains"
 
   zone_id    = data.cloudflare_zone.<x>.id
   subdomains = toset(["@", "www", ...])
   ipv4       = var.server_ipv4
   ipv6       = var.server_ipv6
-  # comment is optional; defaults to "Terraform managed record"
+  # proxied defaults to true; pass false for DNS-only records
+  # comment defaults to "Terraform managed record"
 }
 ```
 
-**Module internals:** `variables.tf`, `versions.tf`, `main.tf` (two `cloudflare_record` resources with `for_each = var.subdomains`). No outputs.
+**Module internals:** `variables.tf`, `versions.tf`, `main.tf` (two `cloudflare_record` resources named `a` and `aaaa`, each with `for_each = var.subdomains`). No outputs.
 
 **State preservation:** Each project's `cloudflare.tf` gets `moved {}` blocks for every renamed resource address. Example for `hooks-fyi`:
 
 ```hcl
 moved {
   from = cloudflare_record.hooks_fyi_a
-  to   = module.cf_proxied_hooks_fyi.cloudflare_record.proxied_a
+  to   = module.cf_proxied_hooks_fyi.cloudflare_record.a
 }
 moved {
   from = cloudflare_record.hooks_fyi_aaaa
-  to   = module.cf_proxied_hooks_fyi.cloudflare_record.proxied_aaaa
+  to   = module.cf_proxied_hooks_fyi.cloudflare_record.aaaa
 }
 ```
 
@@ -65,13 +66,13 @@ moved {
 
 | Project | Migrate? | Notes |
 |---|---|---|
-| `hooks-fyi` | yes | `["@", "www"]` |
-| `rentivo` | yes | `["@", "www"]` |
-| `joy-living` | yes | `["@", "www", "api"]` |
+| `hooks-fyi` | yes | `["@", "www"]`, proxied |
+| `rentivo` | yes | `["@", "www"]`, proxied |
+| `joy-living` | yes | `["@", "www", "api"]`, proxied |
 | `eic-seminarios` (proxied) | yes | `["beta", "mail-beta", "console-s3-beta"]` |
-| `eic-seminarios` (unproxied `s3-beta`) | **no** | Different shape (`proxied = false`, different comment). Stays inline. |
-| `jorgejunior` (`jorgejunior.dev`) | yes | 16-element subdomain set |
-| `jorgejunior` (`j-jr.app`) | yes | 8-element subdomain set |
+| `eic-seminarios` (unproxied `s3-beta`) | yes | Second module instance with `proxied = false` and a custom DNS-only comment |
+| `jorgejunior` (`jorgejunior.dev`) | yes | 16-element subdomain set, proxied |
+| `jorgejunior` (`j-jr.app`) | yes | 8-element subdomain set, proxied |
 | `jorgejunior` Vercel CNAMEs | **no** | Different type/target. Stays inline. |
 | MX / TXT / DKIM CNAMEs | **no** | Project-specific, single resources, no DRY benefit. |
 
@@ -186,8 +187,8 @@ Anything explanatory (project list, layout, adding-a-project howto) **only** liv
 
 ### `docs/ARCHITECTURE.md`
 
-- Update the **Repository layout** tree to include `terraform/modules/cloudflare-proxied-subdomains/`.
-- Add a short subsection under "One root module, many project sub-modules" titled "Shared primitive modules" that explains the role of `terraform/modules/`: small reusable building blocks (current sole occupant: `cloudflare-proxied-subdomains`), distinct from per-project child modules under `terraform/projects/`.
+- Update the **Repository layout** tree to include `terraform/modules/cloudflare-default-server-subdomains/`.
+- Add a short subsection under "One root module, many project sub-modules" titled "Shared primitive modules" that explains the role of `terraform/modules/`: small reusable building blocks (current sole occupant: `cloudflare-default-server-subdomains`), distinct from per-project child modules under `terraform/projects/`.
 - Update the **Cloudflare authentication** table to remove `CLOUDFLARE_ACCOUNT_ID`.
 - Update the **CI/CD flows** section to mention the new `tflint` and `trivy-config` PR jobs and the new fmt step in apply.
 - Leave OIDC future-work note as-is.
@@ -204,7 +205,7 @@ Anything explanatory (project list, layout, adding-a-project howto) **only** liv
 
 1. **PR 1 — Version bumps (F).** Smallest, exercises CI end-to-end with new versions. Confirms infra apply still no-ops on the new toolchain before any structural change.
 2. **PR 2 — Dead code removal (C).** Pure deletion; no plan impact.
-3. **PR 3 — DRY: cloudflare-proxied-subdomains module (B).** Risky-looking but state-preserving via `moved` blocks. Plan must be empty.
+3. **PR 3 — DRY: cloudflare-default-server-subdomains module (B).** Risky-looking but state-preserving via `moved` blocks. Plan must be empty.
 4. **PR 4 — CI hardening (D).** Adds `tflint`, `trivy config`, fmt on apply, pre-commit.
 5. **PR 5 — Documentation (G).** Reflects all prior changes. Last so docs match reality.
 

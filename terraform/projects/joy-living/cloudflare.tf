@@ -2,30 +2,23 @@ data "cloudflare_zone" "joy_living" {
   name = "joyliving.com.br"
 }
 
-locals {
-  joy_living_proxied_subdomains = toset(["@", "www", "api"])
+module "cf_proxied_joy_living" {
+  source = "../../modules/cloudflare-default-server-subdomains"
+
+  zone_id    = data.cloudflare_zone.joy_living.id
+  subdomains = toset(["@", "www", "api"])
+  ipv4       = var.server_ipv4
+  ipv6       = var.server_ipv6
 }
 
-resource "cloudflare_record" "joy_living_a" {
-  for_each = local.joy_living_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.joy_living.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.joy_living_a
+  to   = module.cf_proxied_joy_living.cloudflare_record.a
 }
 
-resource "cloudflare_record" "joy_living_aaaa" {
-  for_each = local.joy_living_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.joy_living.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.joy_living_aaaa
+  to   = module.cf_proxied_joy_living.cloudflare_record.aaaa
 }
 
 output "joy_living_zone_id" {

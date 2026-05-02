@@ -2,30 +2,23 @@ data "cloudflare_zone" "rentivo" {
   name = local.rentivo_domain
 }
 
-locals {
-  rentivo_proxied_subdomains = toset(["@", "www"])
+module "cf_proxied_rentivo" {
+  source = "../../modules/cloudflare-default-server-subdomains"
+
+  zone_id    = data.cloudflare_zone.rentivo.id
+  subdomains = toset(["@", "www"])
+  ipv4       = var.server_ipv4
+  ipv6       = var.server_ipv6
 }
 
-resource "cloudflare_record" "rentivo_a" {
-  for_each = local.rentivo_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.rentivo.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.rentivo_a
+  to   = module.cf_proxied_rentivo.cloudflare_record.a
 }
 
-resource "cloudflare_record" "rentivo_aaaa" {
-  for_each = local.rentivo_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.rentivo.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.rentivo_aaaa
+  to   = module.cf_proxied_rentivo.cloudflare_record.aaaa
 }
 
 resource "cloudflare_record" "rentivo_dmarc" {
