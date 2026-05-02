@@ -1,8 +1,58 @@
 # infra-resources
 
-Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflare DNS), applied via GitHub Actions.
+> Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflare DNS), applied via GitHub Actions.
+
+[![pr-checks](https://img.shields.io/github/actions/workflow/status/jorgejr568/infra-resources/pr-checks.yml?branch=main&label=pr-checks)](https://github.com/jorgejr568/infra-resources/actions/workflows/pr-checks.yml)
+[![License: MIT](https://img.shields.io/github/license/jorgejr568/infra-resources)](LICENSE)
+[![Terraform](https://img.shields.io/badge/terraform-1.10.5-blueviolet)](.tool-versions)
 
 > Full documentation lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). This README is a quick-start.
+
+## Architecture at a glance
+
+PR → plan → review → merge → apply:
+
+```mermaid
+flowchart LR
+  PR[PR opened] --> Plan[terraform-plan]
+  PR --> Lint[tflint]
+  PR --> Sec[trivy-config]
+  Plan -->|comment with diff| PR
+  PR -->|merge to main| Apply[terraform-apply]
+  Apply --> AWS[(AWS)]
+  Apply --> CF[(Cloudflare)]
+```
+
+One root module composes per-project child modules; a shared primitive module emits the proxied A/AAAA pair used across projects:
+
+```mermaid
+flowchart TB
+  subgraph Root["terraform/ (root)"]
+    backend["backend.tf<br/>S3 + DynamoDB"]
+    providers["providers.tf<br/>AWS aliases per project"]
+    main["main.tf"]
+  end
+  subgraph M["modules/"]
+    cfp["cloudflare-default-server-subdomains"]
+  end
+  subgraph P["projects/"]
+    hf["hooks-fyi"]
+    rt["rentivo"]
+    jj["jorgejunior"]
+    jl["joy-living"]
+    ei["eic-seminarios"]
+  end
+  main --> hf
+  main --> rt
+  main --> jj
+  main --> jl
+  main --> ei
+  hf --> cfp
+  rt --> cfp
+  jj --> cfp
+  jl --> cfp
+  ei --> cfp
+```
 
 ## Quick start
 
@@ -38,3 +88,11 @@ The same checks (`terraform_fmt`, `terraform_validate`, `tflint`) plus a Trivy c
 - `.github/workflows/` — `pr-checks.yml` (PR), `terraform-apply.yml` (main).
 - `scripts/` — operational scripts (state backend bootstrap).
 - `docs/` — architecture and decision docs, plus implementation plans under `docs/superpowers/plans/`.
+
+## License
+
+[MIT](LICENSE) — © 2026 Jorge Junior.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). For security reports, see [SECURITY.md](SECURITY.md).
