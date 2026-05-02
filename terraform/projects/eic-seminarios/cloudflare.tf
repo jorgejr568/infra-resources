@@ -2,53 +2,44 @@ data "cloudflare_zone" "eic_seminarios" {
   name = "eic-seminarios.com"
 }
 
-locals {
-  eic_seminarios_proxied_subdomains   = toset(["beta", "mail-beta", "console-s3-beta"])
-  eic_seminarios_unproxied_subdomains = toset(["s3-beta"])
+module "cf_proxied_eic_seminarios" {
+  source = "../../modules/cloudflare-default-server-subdomains"
+
+  zone_id    = data.cloudflare_zone.eic_seminarios.id
+  subdomains = toset(["beta", "mail-beta", "console-s3-beta"])
+  ipv4       = var.server_ipv4
+  ipv6       = var.server_ipv6
 }
 
-resource "cloudflare_record" "eic_seminarios_a" {
-  for_each = local.eic_seminarios_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.eic_seminarios.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.eic_seminarios_a
+  to   = module.cf_proxied_eic_seminarios.cloudflare_record.a
 }
 
-resource "cloudflare_record" "eic_seminarios_aaaa" {
-  for_each = local.eic_seminarios_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.eic_seminarios.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.eic_seminarios_aaaa
+  to   = module.cf_proxied_eic_seminarios.cloudflare_record.aaaa
 }
 
-resource "cloudflare_record" "eic_seminarios_a_unproxied" {
-  for_each = local.eic_seminarios_unproxied_subdomains
+module "cf_unproxied_eic_seminarios" {
+  source = "../../modules/cloudflare-default-server-subdomains"
 
-  zone_id = data.cloudflare_zone.eic_seminarios.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = false
-  comment = "Terraform managed record (DNS-only: MinIO S3 API needs unproxied for SigV4)"
+  zone_id    = data.cloudflare_zone.eic_seminarios.id
+  subdomains = toset(["s3-beta"])
+  ipv4       = var.server_ipv4
+  ipv6       = var.server_ipv6
+  proxied    = false
+  comment    = "Terraform managed record (DNS-only: MinIO S3 API needs unproxied for SigV4)"
 }
 
-resource "cloudflare_record" "eic_seminarios_aaaa_unproxied" {
-  for_each = local.eic_seminarios_unproxied_subdomains
+moved {
+  from = cloudflare_record.eic_seminarios_a_unproxied
+  to   = module.cf_unproxied_eic_seminarios.cloudflare_record.a
+}
 
-  zone_id = data.cloudflare_zone.eic_seminarios.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = false
-  comment = "Terraform managed record (DNS-only: MinIO S3 API needs unproxied for SigV4)"
+moved {
+  from = cloudflare_record.eic_seminarios_aaaa_unproxied
+  to   = module.cf_unproxied_eic_seminarios.cloudflare_record.aaaa
 }
 
 output "eic_seminarios_zone_id" {

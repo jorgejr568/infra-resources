@@ -2,30 +2,23 @@ data "cloudflare_zone" "hooks_fyi" {
   name = "hooks.fyi"
 }
 
-locals {
-  hooks_fyi_proxied_subdomains = toset(["@", "www"])
+module "cf_proxied_hooks_fyi" {
+  source = "../../modules/cloudflare-default-server-subdomains"
+
+  zone_id    = data.cloudflare_zone.hooks_fyi.id
+  subdomains = toset(["@", "www"])
+  ipv4       = var.server_ipv4
+  ipv6       = var.server_ipv6
 }
 
-resource "cloudflare_record" "hooks_fyi_a" {
-  for_each = local.hooks_fyi_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.hooks_fyi.id
-  name    = each.value
-  type    = "A"
-  content = var.server_ipv4
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.hooks_fyi_a
+  to   = module.cf_proxied_hooks_fyi.cloudflare_record.a
 }
 
-resource "cloudflare_record" "hooks_fyi_aaaa" {
-  for_each = local.hooks_fyi_proxied_subdomains
-
-  zone_id = data.cloudflare_zone.hooks_fyi.id
-  name    = each.value
-  type    = "AAAA"
-  content = var.server_ipv6
-  proxied = true
-  comment = "Terraform managed record"
+moved {
+  from = cloudflare_record.hooks_fyi_aaaa
+  to   = module.cf_proxied_hooks_fyi.cloudflare_record.aaaa
 }
 
 output "hooks_fyi_zone_id" {
