@@ -1,9 +1,13 @@
 data "cloudflare_zone" "jorgejunior_dev" {
-  name = "jorgejunior.dev"
+  filter = {
+    name = "jorgejunior.dev"
+  }
 }
 
 data "cloudflare_zone" "j_jr_app" {
-  name = "j-jr.app"
+  filter = {
+    name = "j-jr.app"
+  }
 }
 
 locals {
@@ -72,23 +76,35 @@ module "cf_proxied_j_jr_app" {
   ipv6 = var.server_ipv6
 }
 
-resource "cloudflare_record" "jorgejunior_dev_mx" {
+moved {
+  from = cloudflare_record.jorgejunior_dev_mx
+  to   = cloudflare_dns_record.jorgejunior_dev_mx
+}
+
+moved {
+  from = cloudflare_record.j_jr_app_vercel
+  to   = cloudflare_dns_record.j_jr_app_vercel
+}
+
+resource "cloudflare_dns_record" "jorgejunior_dev_mx" {
   for_each = local.jorgejunior_dev_mx_records
 
   zone_id  = data.cloudflare_zone.jorgejunior_dev.id
   name     = each.value.name
   type     = "MX"
+  ttl      = 1
   content  = each.value.content
   priority = each.value.priority
   comment  = "Terraform managed record"
 }
 
-resource "cloudflare_record" "j_jr_app_vercel" {
+resource "cloudflare_dns_record" "j_jr_app_vercel" {
   for_each = local.j_jr_app_vercel_subdomains
 
   zone_id = data.cloudflare_zone.j_jr_app.id
   name    = each.value
   type    = "CNAME"
+  ttl     = 1
   content = local.vercel_cname_target
   proxied = false
   comment = "Terraform managed record"
