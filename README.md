@@ -2,7 +2,7 @@
 
 > Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflare DNS), applied via GitHub Actions.
 
-[![pr-checks](https://img.shields.io/github/actions/workflow/status/jorgejr568/infra-resources/pr-checks.yml?branch=main&label=pr-checks)](https://github.com/jorgejr568/infra-resources/actions/workflows/pr-checks.yml)
+[![terraform-apply](https://img.shields.io/github/actions/workflow/status/jorgejr568/infra-resources/terraform-apply.yml?branch=main&label=terraform-apply)](https://github.com/jorgejr568/infra-resources/actions/workflows/terraform-apply.yml)
 [![License: MIT](https://img.shields.io/github/license/jorgejr568/infra-resources)](LICENSE)
 [![Terraform](https://img.shields.io/badge/terraform-1.10.5-blueviolet)](.tool-versions)
 
