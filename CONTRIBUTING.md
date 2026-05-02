@@ -19,7 +19,7 @@ Thanks for considering a contribution. This is a personal infra repo — most ch
    ```bash
    cd terraform
    terraform fmt -recursive
-   terraform validate     # requires init; harmless if it errors on backend creds
+   terraform init -backend=false && terraform validate
    tflint --recursive --format=compact
    ```
 5. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) prefix: `feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `refactor:`, `test:`.
