@@ -124,6 +124,29 @@ jobs:
           echo "terraform fmt drift detected. Run 'terraform fmt -recursive' inside terraform/ locally."
           exit 1
 
+  tflint:
+    name: tflint
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.55.0
+
+      - name: tflint --init
+        run: tflint --init
+
+      - name: tflint
+        run: tflint --recursive --format=compact
+
   plan:
     name: plan
     needs: [changes, terraform-plan]
