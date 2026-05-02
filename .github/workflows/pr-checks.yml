@@ -87,8 +87,31 @@ jobs:
             const fs = require('fs');
             let plan = '(no plan output)';
             try { plan = fs.readFileSync('terraform/plan.txt', 'utf8'); } catch (_) {}
-            const max = 60000;
-            if (plan.length > max) plan = plan.slice(0, max) + '\n\n…(truncated)';
+
+            // Split plan output into the noisy refresh-state preamble and
+            // the actual plan summary, so the comment can show the summary
+            // up front and tuck the full output in a collapsed section.
+            const postMarkers = [
+              'Terraform used the selected providers',
+              'No changes. Your infrastructure matches',
+              'Note: Objects have changed outside of Terraform',
+              'Changes to Outputs:',
+            ];
+            let postIdx = -1;
+            for (const m of postMarkers) {
+              const i = plan.indexOf(m);
+              if (i !== -1 && (postIdx === -1 || i < postIdx)) postIdx = i;
+            }
+            const post = postIdx === -1
+              ? null
+              : plan.slice(plan.lastIndexOf('\n', postIdx) + 1);
+
+            const truncate = (s, max) =>
+              s.length > max ? s.slice(0, max) + '\n\n…(truncated)' : s;
+            const POST_MAX = 30000;
+            const RAW_MAX = 25000;
+            const postShown = post == null ? null : truncate(post, POST_MAX);
+            const rawShown = truncate(plan, RAW_MAX);
 
             const body = [
               '### Terraform plan',
@@ -96,20 +119,34 @@ jobs:
               `- **fmt:** \`${process.env.FMT_OUTCOME}\``,
               `- **plan exit code:** \`${process.env.PLAN_EXIT}\` (0 = no changes, 2 = changes pending)`,
               '',
-              '<details><summary>Plan output</summary>',
+              '<details open><summary>Plan output</summary>',
               '',
               '```hcl',
-              plan,
+              postShown == null ? rawShown : postShown,
               '```',
               '',
               '</details>',
-            ].join('\n');
+            ];
+
+            if (postShown != null) {
+              body.push(
+                '',
+                '<details><summary>Raw plan output (incl. refresh state)</summary>',
+                '',
+                '```hcl',
+                rawShown,
+                '```',
+                '',
+                '</details>',
+              );
+            }
+            const finalBody = body.join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body,
+              body: finalBody,
             });
 
       - name: Fail if plan errored
