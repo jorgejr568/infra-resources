@@ -11,16 +11,6 @@ module "cf_proxied_eic_seminarios" {
   ipv6       = var.server_ipv6
 }
 
-moved {
-  from = cloudflare_record.eic_seminarios_a
-  to   = module.cf_proxied_eic_seminarios.cloudflare_record.a
-}
-
-moved {
-  from = cloudflare_record.eic_seminarios_aaaa
-  to   = module.cf_proxied_eic_seminarios.cloudflare_record.aaaa
-}
-
 module "cf_unproxied_eic_seminarios" {
   source = "../../modules/cloudflare-default-server-subdomains"
 
@@ -30,16 +20,6 @@ module "cf_unproxied_eic_seminarios" {
   ipv6       = var.server_ipv6
   proxied    = false
   comment    = "Terraform managed record (DNS-only: MinIO S3 API needs unproxied for SigV4)"
-}
-
-moved {
-  from = cloudflare_record.eic_seminarios_a_unproxied
-  to   = module.cf_unproxied_eic_seminarios.cloudflare_record.a
-}
-
-moved {
-  from = cloudflare_record.eic_seminarios_aaaa_unproxied
-  to   = module.cf_unproxied_eic_seminarios.cloudflare_record.aaaa
 }
 
 output "eic_seminarios_zone_id" {

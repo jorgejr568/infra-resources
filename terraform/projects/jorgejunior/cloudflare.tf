@@ -57,16 +57,6 @@ module "cf_proxied_jorgejunior_dev" {
   ipv6 = var.server_ipv6
 }
 
-moved {
-  from = cloudflare_record.jorgejunior_dev_a
-  to   = module.cf_proxied_jorgejunior_dev.cloudflare_record.a
-}
-
-moved {
-  from = cloudflare_record.jorgejunior_dev_aaaa
-  to   = module.cf_proxied_jorgejunior_dev.cloudflare_record.aaaa
-}
-
 module "cf_proxied_j_jr_app" {
   source = "../../modules/cloudflare-default-server-subdomains"
 
@@ -80,16 +70,6 @@ module "cf_proxied_j_jr_app" {
   ])
   ipv4 = var.server_ipv4
   ipv6 = var.server_ipv6
-}
-
-moved {
-  from = cloudflare_record.j_jr_app_a
-  to   = module.cf_proxied_j_jr_app.cloudflare_record.a
-}
-
-moved {
-  from = cloudflare_record.j_jr_app_aaaa
-  to   = module.cf_proxied_j_jr_app.cloudflare_record.aaaa
 }
 
 resource "cloudflare_record" "jorgejunior_dev_mx" {

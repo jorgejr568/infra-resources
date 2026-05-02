@@ -11,16 +11,6 @@ module "cf_proxied_rentivo" {
   ipv6       = var.server_ipv6
 }
 
-moved {
-  from = cloudflare_record.rentivo_a
-  to   = module.cf_proxied_rentivo.cloudflare_record.a
-}
-
-moved {
-  from = cloudflare_record.rentivo_aaaa
-  to   = module.cf_proxied_rentivo.cloudflare_record.aaaa
-}
-
 resource "cloudflare_record" "rentivo_dmarc" {
   zone_id = data.cloudflare_zone.rentivo.id
   name    = "_dmarc"
