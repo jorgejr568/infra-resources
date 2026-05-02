@@ -16,6 +16,9 @@ This repo is the single source of truth for the infrastructure managed under the
 │   ├── variables.tf               # root inputs
 │   ├── outputs.tf                 # surfaces module outputs to the root
 │   ├── main.tf                    # `module "<project>" { source = "./projects/<project>" }`
+│   ├── .tflint.hcl                # tflint config (terraform + aws rulesets)
+│   ├── modules/                   # shared primitive modules (small, reusable)
+│   │   └── cloudflare-default-server-subdomains/
 │   └── projects/
 │       └── <project>/             # one child module per application/project
 │           ├── s3.tf              # bucket(s) for this project
@@ -23,6 +26,8 @@ This repo is the single source of truth for the infrastructure managed under the
 │           └── outputs.tf         # outputs the root module re-exports
 ├── scripts/                       # one-off operational scripts
 ├── docs/                          # design + decision records
+├── .pre-commit-config.yaml        # local fmt/validate/tflint hooks
+├── .trivyignore                   # trivy config-scan suppressions (with rationale)
 ├── .tool-versions                 # tfenv / asdf hint (terraform version)
 └── README.md                      # quick-start for humans
 ```
@@ -37,6 +42,12 @@ Why this shape:
 - **Simple CI.** The workflows run a single `terraform init/plan/apply` against `terraform/`. Adding a project is a folder + a `module` block in `main.tf` — no CI changes.
 
 Trade-off: blast radius is larger (one bad apply affects everything in this repo). For our scale that's acceptable; if it becomes a concern later we'd promote a project into its own root module with its own state.
+
+### Shared primitive modules
+
+`terraform/modules/` holds small reusable building blocks distinct from per-project child modules under `terraform/projects/`. They're primitives — equivalent in role to `aws_s3_bucket_versioning` or `aws_s3_bucket_public_access_block` — not project boundaries.
+
+Currently the only one is `cloudflare-default-server-subdomains`: given a Cloudflare zone, a set of subdomains, and an IPv4/IPv6 pair, it emits the A and AAAA records pointing at the default origin server. A `proxied` boolean (default `true`) toggles Cloudflare proxying so the same primitive serves both proxied callers and DNS-only ones (the `eic-seminarios` `s3-beta` records, where SigV4 needs an unproxied DNS path). MX, DKIM, TXT, and Vercel CNAMEs remain inline in each project — they don't share the same shape.
 
 ### Adding a project
 
@@ -115,21 +126,23 @@ The CI user is **not** the same as any project's service account (e.g. `hooks-fy
 | `SERVER_IPV4` (var)             | Origin IPv4 used by all proxied A records |
 | `SERVER_IPV6` (var)             | Origin IPv6 used by all proxied AAAA records |
 
-These are surfaced to Terraform via `TF_VAR_*` env in the workflows. The values are not sensitive (server IPs are published in DNS; the account ID is non-secret) but live outside the repo to avoid hardcoding environment-specific values.
+These are surfaced to Terraform via `TF_VAR_*` env in the workflows. The values are not sensitive (server IPs are published in DNS) but live outside the repo to avoid hardcoding environment-specific values.
 
 ## CI/CD flows
 
 Both workflows run in the `terraform/` directory. Because there is one root module, one `init/plan/apply` covers every project.
 
 ### Plan (on PR)
+
 Trigger: `pull_request` targeting `main`, when `terraform/**` or workflow files change.
-1. Checkout
-2. Configure AWS credentials
-3. `terraform fmt -check -recursive`
-4. `terraform init`
-5. `terraform validate`
-6. `terraform plan -no-color -out=tfplan`
-7. Post the plan as a PR comment
+
+Three jobs run in parallel under `pr-checks.yml`:
+
+1. **terraform-plan** — `fmt -check`, `init`, `validate`, `plan -out=tfplan`, then posts the plan as a PR comment.
+2. **tflint** — runs `tflint --recursive` against `terraform/` with the `terraform` (recommended preset) and `aws` rulesets. Config lives at `terraform/.tflint.hcl`.
+3. **trivy-config** — `aquasecurity/trivy-action` running `trivy config --severity HIGH,CRITICAL terraform/`. Suppressions live in `.trivyignore` with one-line rationale per entry.
+
+A final `plan` aggregator job requires all three to be `success` or `skipped` (the paths-filter skips them when only docs change).
 
 ### Apply (on merge / manual)
 Triggers:
@@ -137,12 +150,17 @@ Triggers:
 - `workflow_dispatch` (manual run from the Actions tab).
 1. Checkout
 2. Configure AWS credentials
-3. `terraform init`
-4. `terraform validate`
-5. `terraform plan -no-color -out=tfplan`
-6. `terraform apply -auto-approve tfplan`
+3. `terraform fmt -check -recursive` (no `continue-on-error` — manual runs can't bypass fmt)
+4. `terraform init`
+5. `terraform validate`
+6. `terraform plan -no-color -out=tfplan`
+7. `terraform apply -auto-approve tfplan`
 
 A single `concurrency: terraform-apply` group prevents two simultaneous applies from racing the state lock.
+
+### Local checks
+
+`pre-commit` (`.pre-commit-config.yaml`) wires up the same `terraform_fmt`, `terraform_validate`, and `terraform_tflint` hooks for local commits. Optional but recommended — CI is the source of truth.
 
 ## Bootstrap order (one-time, per AWS account)
 
