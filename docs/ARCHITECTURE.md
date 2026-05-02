@@ -114,7 +114,6 @@ The CI user is **not** the same as any project's service account (e.g. `hooks-fy
 | `CLOUDFLARE_API_TOKEN` (secret) | Cloudflare API token consumed by the cloudflare provider |
 | `SERVER_IPV4` (var)             | Origin IPv4 used by all proxied A records |
 | `SERVER_IPV6` (var)             | Origin IPv6 used by all proxied AAAA records |
-| `CLOUDFLARE_ACCOUNT_ID` (var)   | Cloudflare account ID (currently passthrough output only) |
 
 These are surfaced to Terraform via `TF_VAR_*` env in the workflows. The values are not sensitive (server IPs are published in DNS; the account ID is non-secret) but live outside the repo to avoid hardcoding environment-specific values.
 

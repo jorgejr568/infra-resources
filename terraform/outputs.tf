@@ -96,8 +96,3 @@ output "joy_living_zone_id" {
   description = "Cloudflare zone ID for joyliving.com.br."
   value       = module.joy_living.joy_living_zone_id
 }
-
-output "cloudflare_account_id" {
-  description = "Cloudflare account ID (passthrough from var.cloudflare_account_id)."
-  value       = var.cloudflare_account_id
-}

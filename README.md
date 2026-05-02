@@ -16,7 +16,6 @@ Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflar
    - `CLOUDFLARE_API_TOKEN`
 3. **Configure GitHub repo variables:**
    - `SERVER_IPV4`, `SERVER_IPV6` — origin server IPs proxied by Cloudflare
-   - `CLOUDFLARE_ACCOUNT_ID`
 4. **Push to `main`** — the apply workflow runs automatically.
 5. **For changes thereafter**, open a PR. The plan workflow comments the diff. Merge to apply.
 
