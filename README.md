@@ -26,3 +26,14 @@ Terraform-managed infrastructure for the `jorgejr568` ecosystem (AWS + Cloudflar
 - `.github/workflows/` — `terraform-plan.yml` (PR), `terraform-apply.yml` (main).
 - `scripts/` — operational scripts (state backend bootstrap).
 - `docs/` — architecture and decision docs, plus implementation plans under `docs/superpowers/plans/`.
+
+## Local development
+
+Optional but recommended: install [pre-commit](https://pre-commit.com) so fmt/validate/tflint run on every commit.
+
+```bash
+brew install pre-commit
+pre-commit install
+```
+
+The same checks (`terraform_fmt`, `terraform_validate`, `tflint`) plus a Trivy config scan run in CI on every PR.
