@@ -13,6 +13,26 @@ module "cf_proxied_rentivo" {
   ipv6       = var.server_ipv6
 }
 
+moved {
+  from = cloudflare_record.rentivo_dmarc
+  to   = cloudflare_dns_record.rentivo_dmarc
+}
+
+moved {
+  from = cloudflare_record.rentivo_ses_dkim
+  to   = cloudflare_dns_record.rentivo_ses_dkim
+}
+
+moved {
+  from = cloudflare_record.rentivo_mail_mx
+  to   = cloudflare_dns_record.rentivo_mail_mx
+}
+
+moved {
+  from = cloudflare_record.rentivo_mail_spf
+  to   = cloudflare_dns_record.rentivo_mail_spf
+}
+
 resource "cloudflare_dns_record" "rentivo_dmarc" {
   zone_id = data.cloudflare_zone.rentivo.id
   name    = "_dmarc"

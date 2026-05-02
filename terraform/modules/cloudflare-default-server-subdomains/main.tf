@@ -1,3 +1,13 @@
+moved {
+  from = cloudflare_record.a
+  to   = cloudflare_dns_record.a
+}
+
+moved {
+  from = cloudflare_record.aaaa
+  to   = cloudflare_dns_record.aaaa
+}
+
 resource "cloudflare_dns_record" "a" {
   for_each = var.subdomains
 

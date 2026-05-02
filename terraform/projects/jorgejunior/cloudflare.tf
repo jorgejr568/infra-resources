@@ -76,6 +76,16 @@ module "cf_proxied_j_jr_app" {
   ipv6 = var.server_ipv6
 }
 
+moved {
+  from = cloudflare_record.jorgejunior_dev_mx
+  to   = cloudflare_dns_record.jorgejunior_dev_mx
+}
+
+moved {
+  from = cloudflare_record.j_jr_app_vercel
+  to   = cloudflare_dns_record.j_jr_app_vercel
+}
+
 resource "cloudflare_dns_record" "jorgejunior_dev_mx" {
   for_each = local.jorgejunior_dev_mx_records
 
