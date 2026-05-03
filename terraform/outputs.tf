@@ -96,3 +96,18 @@ output "joy_living_zone_id" {
   description = "Cloudflare zone ID for joyliving.com.br."
   value       = module.joy_living.joy_living_zone_id
 }
+
+output "rentivo_kms_key_id" {
+  description = "ID of the rentivo KMS key."
+  value       = module.rentivo.rentivo_kms_key_id
+}
+
+output "rentivo_kms_key_arn" {
+  description = "ARN of the rentivo KMS key."
+  value       = module.rentivo.rentivo_kms_key_arn
+}
+
+output "rentivo_kms_alias" {
+  description = "Alias of the rentivo KMS key."
+  value       = module.rentivo.rentivo_kms_alias
+}
