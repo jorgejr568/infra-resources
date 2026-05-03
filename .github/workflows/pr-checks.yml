@@ -113,7 +113,12 @@ jobs:
             const postShown = post == null ? null : truncate(post, POST_MAX);
             const rawShown = truncate(plan, RAW_MAX);
 
+            // Hidden marker so the next run can find and update this comment
+            // in place instead of stacking a new one per push.
+            const COMMENT_MARKER = '<!-- terraform-plan-comment -->';
+
             const body = [
+              COMMENT_MARKER,
               '### Terraform plan',
               '',
               `- **fmt:** \`${process.env.FMT_OUTCOME}\``,
@@ -142,12 +147,37 @@ jobs:
             }
             const finalBody = body.join('\n');
 
-            await github.rest.issues.createComment({
+            const allComments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: finalBody,
+              per_page: 100,
             });
+            const matching = allComments.filter(c => (c.body || '').includes(COMMENT_MARKER));
+
+            if (matching.length === 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: finalBody,
+              });
+            } else {
+              const [keep, ...stale] = matching;
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: keep.id,
+                body: finalBody,
+              });
+              for (const c of stale) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                });
+              }
+            }
 
       - name: Fail if plan errored
         if: steps.plan.outputs.exitcode != '0' && steps.plan.outputs.exitcode != '2'
