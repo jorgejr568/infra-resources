@@ -22,6 +22,11 @@ resource "aws_kms_key" "rentivo" {
   policy                   = data.aws_iam_policy_document.rentivo_kms.json
 }
 
+resource "aws_kms_alias" "rentivo" {
+  name          = "alias/rentivo"
+  target_key_id = aws_kms_key.rentivo.key_id
+}
+
 data "aws_iam_policy_document" "rentivo_kms_use" {
   statement {
     sid    = "UseRentivoKey"
@@ -56,4 +61,9 @@ output "rentivo_kms_key_id" {
 output "rentivo_kms_key_arn" {
   description = "ARN of the rentivo KMS key."
   value       = aws_kms_key.rentivo.arn
+}
+
+output "rentivo_kms_alias" {
+  description = "Alias name for the rentivo KMS key."
+  value       = aws_kms_alias.rentivo.name
 }
