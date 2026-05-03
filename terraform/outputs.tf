@@ -106,8 +106,3 @@ output "rentivo_kms_key_arn" {
   description = "ARN of the rentivo KMS key."
   value       = module.rentivo.rentivo_kms_key_arn
 }
-
-output "rentivo_kms_alias" {
-  description = "Alias of the rentivo KMS key."
-  value       = module.rentivo.rentivo_kms_alias
-}
