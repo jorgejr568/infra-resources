@@ -54,3 +54,11 @@ module "joy_living" {
     cloudflare = cloudflare
   }
 }
+
+module "organizze_mcp" {
+  source = "./projects/organizze-mcp"
+
+  providers = {
+    aws = aws.organizze_mcp
+  }
+}
