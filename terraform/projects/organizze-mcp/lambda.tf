@@ -53,6 +53,29 @@ resource "aws_iam_role_policy_attachment" "organizze_mcp_lambda_sqs_send" {
   policy_arn = aws_iam_policy.organizze_mcp_lambda_sqs_send.arn
 }
 
+data "aws_iam_policy_document" "organizze_mcp_lambda_read_ingest_secret" {
+  statement {
+    sid    = "ReadOrganizzeMcpIngestSharedSecret"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+    resources = [aws_secretsmanager_secret.organizze_mcp_ingest_shared_secret.arn]
+  }
+}
+
+resource "aws_iam_policy" "organizze_mcp_lambda_read_ingest_secret" {
+  name        = "organizze-mcp-lambda-read-ingest-secret"
+  description = "Allows the organizze-mcp ingest lambda to read its shared secret from Secrets Manager."
+  policy      = data.aws_iam_policy_document.organizze_mcp_lambda_read_ingest_secret.json
+}
+
+resource "aws_iam_role_policy_attachment" "organizze_mcp_lambda_read_ingest_secret" {
+  role       = aws_iam_role.organizze_mcp_lambda_exec.name
+  policy_arn = aws_iam_policy.organizze_mcp_lambda_read_ingest_secret.arn
+}
+
 resource "aws_cloudwatch_log_group" "organizze_mcp_stats_ingest" {
   name              = "/aws/lambda/organizze-mcp-stats-ingest"
   retention_in_days = 30
@@ -72,13 +95,15 @@ resource "aws_lambda_function" "organizze_mcp_stats_ingest" {
 
   environment {
     variables = {
-      STATS_QUEUE_URL = aws_sqs_queue.organizze_mcp_stats.url
+      STATS_QUEUE_URL          = aws_sqs_queue.organizze_mcp_stats.url
+      INGEST_SHARED_SECRET_ARN = aws_secretsmanager_secret.organizze_mcp_ingest_shared_secret.arn
     }
   }
 
   depends_on = [
     aws_cloudwatch_log_group.organizze_mcp_stats_ingest,
     aws_iam_role_policy_attachment.organizze_mcp_lambda_basic,
+    aws_iam_role_policy_attachment.organizze_mcp_lambda_read_ingest_secret,
   ]
 
   # Code is deployed out-of-band by the organizze-mcp-deployer user via
