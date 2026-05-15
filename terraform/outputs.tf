@@ -111,3 +111,87 @@ output "rentivo_kms_alias" {
   description = "Alias of the rentivo KMS key."
   value       = module.rentivo.rentivo_kms_alias
 }
+
+output "organizze_mcp_stats_queue_name" {
+  description = "Name of the organizze-mcp stats SQS queue."
+  value       = module.organizze_mcp.organizze_mcp_stats_queue_name
+}
+
+output "organizze_mcp_stats_queue_url" {
+  description = "URL of the organizze-mcp stats SQS queue."
+  value       = module.organizze_mcp.organizze_mcp_stats_queue_url
+}
+
+output "organizze_mcp_stats_queue_arn" {
+  description = "ARN of the organizze-mcp stats SQS queue."
+  value       = module.organizze_mcp.organizze_mcp_stats_queue_arn
+}
+
+output "organizze_mcp_stats_dlq_name" {
+  description = "Name of the organizze-mcp stats DLQ."
+  value       = module.organizze_mcp.organizze_mcp_stats_dlq_name
+}
+
+output "organizze_mcp_stats_dlq_url" {
+  description = "URL of the organizze-mcp stats DLQ."
+  value       = module.organizze_mcp.organizze_mcp_stats_dlq_url
+}
+
+output "organizze_mcp_stats_dlq_arn" {
+  description = "ARN of the organizze-mcp stats DLQ."
+  value       = module.organizze_mcp.organizze_mcp_stats_dlq_arn
+}
+
+output "organizze_mcp_stats_ingest_function_name" {
+  description = "Name of the organizze-mcp stats ingest Lambda function."
+  value       = module.organizze_mcp.organizze_mcp_stats_ingest_function_name
+}
+
+output "organizze_mcp_stats_ingest_function_arn" {
+  description = "ARN of the organizze-mcp stats ingest Lambda function."
+  value       = module.organizze_mcp.organizze_mcp_stats_ingest_function_arn
+}
+
+output "organizze_mcp_stats_ingest_function_url" {
+  description = "Public HTTPS URL of the organizze-mcp stats ingest Lambda."
+  value       = module.organizze_mcp.organizze_mcp_stats_ingest_function_url
+}
+
+output "organizze_mcp_lambda_exec_role_arn" {
+  description = "ARN of the organizze-mcp Lambda execution role."
+  value       = module.organizze_mcp.organizze_mcp_lambda_exec_role_arn
+}
+
+output "organizze_mcp_deployer_user_name" {
+  description = "IAM user name for the organizze-mcp deployer."
+  value       = module.organizze_mcp.organizze_mcp_deployer_user_name
+}
+
+output "organizze_mcp_deployer_access_key_id" {
+  description = "Access key ID for the organizze-mcp deployer user."
+  value       = module.organizze_mcp.organizze_mcp_deployer_access_key_id
+  sensitive   = true
+}
+
+output "organizze_mcp_deployer_secret_access_key" {
+  description = "Secret access key for the organizze-mcp deployer user."
+  value       = module.organizze_mcp.organizze_mcp_deployer_secret_access_key
+  sensitive   = true
+}
+
+output "organizze_mcp_consumer_user_name" {
+  description = "IAM user name for the organizze-mcp consumer."
+  value       = module.organizze_mcp.organizze_mcp_consumer_user_name
+}
+
+output "organizze_mcp_consumer_access_key_id" {
+  description = "Access key ID for the organizze-mcp consumer user."
+  value       = module.organizze_mcp.organizze_mcp_consumer_access_key_id
+  sensitive   = true
+}
+
+output "organizze_mcp_consumer_secret_access_key" {
+  description = "Secret access key for the organizze-mcp consumer user."
+  value       = module.organizze_mcp.organizze_mcp_consumer_secret_access_key
+  sensitive   = true
+}
