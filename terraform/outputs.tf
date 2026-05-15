@@ -162,6 +162,16 @@ output "organizze_mcp_lambda_exec_role_arn" {
   value       = module.organizze_mcp.organizze_mcp_lambda_exec_role_arn
 }
 
+output "organizze_mcp_ingest_shared_secret_arn" {
+  description = "ARN of the organizze-mcp ingest shared-secret in Secrets Manager."
+  value       = module.organizze_mcp.organizze_mcp_ingest_shared_secret_arn
+}
+
+output "organizze_mcp_ingest_shared_secret_name" {
+  description = "Name of the organizze-mcp ingest shared-secret in Secrets Manager."
+  value       = module.organizze_mcp.organizze_mcp_ingest_shared_secret_name
+}
+
 output "organizze_mcp_deployer_user_name" {
   description = "IAM user name for the organizze-mcp deployer."
   value       = module.organizze_mcp.organizze_mcp_deployer_user_name
