@@ -29,11 +29,21 @@ data "aws_iam_policy_document" "organizze_mcp_deploy" {
     ]
     resources = [aws_lambda_function.organizze_mcp_stats_ingest.arn]
   }
+
+  statement {
+    sid    = "ReadIngestSharedSecret"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+    resources = [aws_secretsmanager_secret.organizze_mcp_ingest_shared_secret.arn]
+  }
 }
 
 resource "aws_iam_policy" "organizze_mcp_deploy" {
   name        = "organizze-mcp-deploy"
-  description = "Allows the organizze-mcp deployer user to push code to the stats ingest Lambda."
+  description = "Allows the organizze-mcp deployer user to push code to the stats ingest Lambda and read the ingest shared secret for baking into publisher builds."
   policy      = data.aws_iam_policy_document.organizze_mcp_deploy.json
 }
 
