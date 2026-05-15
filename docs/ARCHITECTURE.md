@@ -12,7 +12,7 @@ This repo is the single source of truth for the infrastructure managed under the
 ├── terraform/                     # the one Terraform root module
 │   ├── versions.tf                # required terraform / providers
 │   ├── providers.tf               # AWS provider config + default tags
-│   ├── backend.tf                 # remote state (S3 + DynamoDB)
+│   ├── backend.tf                 # remote state (S3 + native lockfile)
 │   ├── variables.tf               # root inputs
 │   ├── outputs.tf                 # surfaces module outputs to the root
 │   ├── main.tf                    # `module "<project>" { source = "./projects/<project>" }`
@@ -98,11 +98,11 @@ Within a project, resources are grouped by AWS service, not by feature.
 
 State is stored remotely in:
 - **Bucket:** `jorgejr568-aws-resources-tfstate` (versioned, AES256-encrypted, public access blocked).
-- **Lock table:** `aws-resources-tflock` (DynamoDB, on-demand billing).
+- **Locking:** S3-native via `use_lockfile = true` (Terraform ≥ 1.10) — a sibling `.tflock` object next to the state key. No DynamoDB table.
 - **Region:** `us-east-1`.
 - **Key:** `aws-resources.tfstate`.
 
-Both backend resources are created once via `scripts/bootstrap-backend.sh`. The script is idempotent so re-running is safe.
+The state bucket is created once via `scripts/bootstrap-backend.sh`. The script is idempotent so re-running is safe.
 
 > ⚠ State contains sensitive values (notably IAM access key secrets). Read access to `jorgejr568-aws-resources-tfstate` should be restricted to the same humans/automation that can apply this repo.
 
