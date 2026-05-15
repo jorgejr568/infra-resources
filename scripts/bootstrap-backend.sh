@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Creates the S3 bucket and DynamoDB lock table used as the Terraform remote
-# state backend for this repo. Run once per AWS account, before the first
-# `terraform apply`.
+# Creates the S3 bucket used as the Terraform remote state backend for this
+# repo. Run once per AWS account, before the first `terraform apply`.
+#
+# Locking is handled by the S3 backend's native `use_lockfile = true` option
+# (Terraform >= 1.10), which writes a sibling `.tflock` object — no separate
+# DynamoDB table is required.
 #
 # Usage:
 #   AWS_PROFILE=hooks-fyi ./scripts/bootstrap-backend.sh
@@ -12,11 +15,9 @@ set -euo pipefail
 
 REGION="${AWS_REGION:-us-east-1}"
 STATE_BUCKET="${STATE_BUCKET:-jorgejr568-aws-resources-tfstate}"
-LOCK_TABLE="${LOCK_TABLE:-aws-resources-tflock}"
 
 echo "Region:       $REGION"
 echo "State bucket: $STATE_BUCKET"
-echo "Lock table:   $LOCK_TABLE"
 echo
 
 # --- S3 bucket ---------------------------------------------------------------
@@ -51,20 +52,6 @@ aws s3api put-public-access-block \
     "BlockPublicAcls":true,"IgnorePublicAcls":true,
     "BlockPublicPolicy":true,"RestrictPublicBuckets":true
   }'
-
-# --- DynamoDB lock table -----------------------------------------------------
-if aws dynamodb describe-table --table-name "$LOCK_TABLE" --region "$REGION" >/dev/null 2>&1; then
-  echo "✓ Lock table $LOCK_TABLE already exists."
-else
-  echo "→ Creating lock table $LOCK_TABLE ..."
-  aws dynamodb create-table \
-    --table-name "$LOCK_TABLE" \
-    --region "$REGION" \
-    --attribute-definitions AttributeName=LockID,AttributeType=S \
-    --key-schema AttributeName=LockID,KeyType=HASH \
-    --billing-mode PAY_PER_REQUEST
-  aws dynamodb wait table-exists --table-name "$LOCK_TABLE" --region "$REGION"
-fi
 
 echo
 echo "✓ Backend ready. You can now run terraform from CI or locally."

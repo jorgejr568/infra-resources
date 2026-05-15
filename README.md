@@ -28,7 +28,7 @@ One root module composes per-project child modules; a shared primitive module em
 ```mermaid
 flowchart TB
   subgraph Root["terraform/ (root)"]
-    backend["backend.tf<br/>S3 + DynamoDB"]
+    backend["backend.tf<br/>S3 + native lockfile"]
     providers["providers.tf<br/>AWS aliases per project"]
     main["main.tf"]
   end
