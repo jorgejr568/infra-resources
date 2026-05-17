@@ -40,4 +40,4 @@ This is a personal infrastructure repository. There is no funded bug-bounty prog
 - Code-quality concerns (open a regular issue or PR).
 - Cosmetic or naming preferences.
 - Findings about a service running at one of the listed domains (report to that service's owner).
-- Generic "you should use OIDC instead of access keys" — already tracked as future work in `docs/ARCHITECTURE.md`. PRs welcome.
+- Generic "you should use OIDC instead of access keys" — already tracked as future work in `docs/ARCHITECTURE.md`.
