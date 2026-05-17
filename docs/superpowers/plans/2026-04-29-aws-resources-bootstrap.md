@@ -49,14 +49,14 @@ Each file has one responsibility. `s3.tf` and `iam.tf` are split by resource fam
 ## Task 1: Repo skeleton (gitignore, tool-versions, README stub)
 
 **Files:**
-- Create: `/Users/j/src/jorgejr568/aws-resources/.gitignore`
-- Create: `/Users/j/src/jorgejr568/aws-resources/.tool-versions`
-- Create: `/Users/j/src/jorgejr568/aws-resources/README.md`
+- Create: `<repo-root>/.gitignore`
+- Create: `<repo-root>/.tool-versions`
+- Create: `<repo-root>/README.md`
 
 - [ ] **Step 1: Initialize git**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git init -b main
 ```
 
@@ -128,7 +128,7 @@ Terraform-managed AWS resources for the `hooks-fyi` ecosystem and beyond, applie
 - [ ] **Step 5: Verify and commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 ls -la
 git add .gitignore .tool-versions README.md
 git commit -m "chore: initial repo skeleton"
@@ -214,7 +214,7 @@ variable "aws_region" {
 
 If terraform is installed:
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources/terraform
+cd <repo-root>/terraform
 terraform fmt -check -recursive
 terraform init -backend=false
 terraform validate
@@ -226,7 +226,7 @@ If not installed: skip — CI will validate.
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/versions.tf terraform/providers.tf terraform/backend.tf terraform/variables.tf terraform/outputs.tf
 git commit -m "feat(tf): add terraform root module skeleton with S3 backend"
 ```
@@ -295,7 +295,7 @@ output "hooks_fyi_request_files_bucket_arn" {
 - [ ] **Step 2: Verify (if terraform installed)**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources/terraform
+cd <repo-root>/terraform
 terraform fmt -check
 terraform validate
 ```
@@ -304,7 +304,7 @@ Expected: `Success! The configuration is valid.`
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/s3.tf
 git commit -m "feat(tf): add hooks-fyi-request-files S3 bucket"
 ```
@@ -388,7 +388,7 @@ output "hooks_fyi_secret_access_key" {
 - [ ] **Step 2: Verify (if terraform installed)**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources/terraform
+cd <repo-root>/terraform
 terraform fmt -check
 terraform validate
 ```
@@ -397,7 +397,7 @@ Expected: `Success!`
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/iam.tf
 git commit -m "feat(tf): add hooks-fyi IAM user with bucket read-write policy"
 ```
@@ -487,7 +487,7 @@ echo "✓ Backend ready. You can now run terraform from CI or locally."
 - [ ] **Step 2: Make it executable and sanity-check shell syntax**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 chmod +x scripts/bootstrap-backend.sh
 bash -n scripts/bootstrap-backend.sh
 ```
@@ -627,7 +627,7 @@ Requires read access to the state bucket. Don't commit, don't paste in chat.
 - [ ] **Step 2: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add docs/ARCHITECTURE.md
 git commit -m "docs: add architecture overview"
 ```
@@ -764,7 +764,7 @@ jobs:
 - [ ] **Step 2: Sanity-check YAML syntax**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/terraform-plan.yml'))" && echo OK
 ```
 Expected: `OK`.
@@ -843,7 +843,7 @@ jobs:
 - [ ] **Step 2: Sanity-check YAML**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/terraform-apply.yml'))" && echo OK
 ```
 Expected: `OK`.
@@ -864,7 +864,7 @@ The plan file already exists at `docs/superpowers/plans/2026-04-29-aws-resources
 - [ ] **Step 1: Commit the plan**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add docs/superpowers/plans/2026-04-29-aws-resources-bootstrap.md
 git commit -m "docs: add bootstrap implementation plan"
 ```
@@ -891,7 +891,7 @@ Expected: logged in as `jorgejr568`.
 - [ ] **Step 2: Create the private repo (no auto-push, no auto-clone)**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 gh repo create jorgejr568/aws-resources \
   --private \
   --description "Terraform-managed AWS resources, applied via GitHub Actions." \

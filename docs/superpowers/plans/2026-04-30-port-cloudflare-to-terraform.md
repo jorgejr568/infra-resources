@@ -63,34 +63,34 @@ We keep the rest of `cloudflare-resources/` in place for now — Tasks 4–9 ref
 
 - [ ] **Step 1: Confirm working tree is clean**
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources status --short`
+Run: `git -C <repo-root> status --short`
 Expected: empty output.
 
 - [ ] **Step 2: Capture the inner repo's HEAD SHA for the commit message**
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources/cloudflare-resources rev-parse HEAD`
+Run: `git -C <repo-root>/cloudflare-resources rev-parse HEAD`
 Expected: 40-char SHA. Save it (referenced as `<INNER_HEAD_SHA>` below).
 
 - [ ] **Step 3: Remove the inner `.git/` directory**
 
-Run: `rm -rf /Users/j/src/jorgejr568/aws-resources/cloudflare-resources/.git`
+Run: `rm -rf <repo-root>/cloudflare-resources/.git`
 Expected: exit 0, no output.
 
 - [ ] **Step 4: Verify the inner clone is gone and content is now untracked**
 
-Run: `test -d /Users/j/src/jorgejr568/aws-resources/cloudflare-resources/.git && echo "still there" || echo "gone"`
+Run: `test -d <repo-root>/cloudflare-resources/.git && echo "still there" || echo "gone"`
 Expected: `gone`.
 
-Run: `test -f /Users/j/src/jorgejr568/aws-resources/.gitmodules && echo "FOUND" || echo "absent"`
+Run: `test -f <repo-root>/.gitmodules && echo "FOUND" || echo "absent"`
 Expected: `absent`.
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources status --short --untracked-files=normal cloudflare-resources/ | head -5`
+Run: `git -C <repo-root> status --short --untracked-files=normal cloudflare-resources/ | head -5`
 Expected: lines starting with `??` (untracked files), not a single collapsed `?? cloudflare-resources/`. If it collapsed, that's still fine — `git add cloudflare-resources/` will work either way.
 
 - [ ] **Step 5: Stage and commit the imported tree (it'll be deleted again in Task 13, but capturing it as a real commit gives a clean history of "the Pulumi version we ported from")**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add cloudflare-resources/
 git commit -m "$(cat <<'EOF'
 chore: import cloudflare-resources tree (pre-port snapshot)
@@ -190,13 +190,13 @@ Use Edit on `terraform/providers.tf`. Append (the file currently ends at line 36
 
 - [ ] **Step 3: Verify formatting**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0. If non-zero, run `terraform fmt -recursive` and re-check.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/versions.tf terraform/providers.tf
 git commit -m "feat(tf): add cloudflare provider to root module"
 ```
@@ -253,7 +253,7 @@ Expected: four `variable` blocks total (`aws_region`, `server_ipv4`, `server_ipv
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/variables.tf
 git commit -m "feat(tf): add server IPs and cloudflare account id variables"
 ```
@@ -415,13 +415,13 @@ Use Edit on `terraform/outputs.tf` (append at the end):
 
 - [ ] **Step 6: Verify**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0. If non-zero, run `terraform fmt -recursive`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/projects/hooks-fyi/ terraform/main.tf terraform/outputs.tf
 git commit -m "feat(tf): port hooks.fyi cloudflare records to terraform"
 ```
@@ -622,13 +622,13 @@ Use Edit on `terraform/outputs.tf`:
 
 - [ ] **Step 6: Verify formatting**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0. Run `terraform fmt -recursive` if drift.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/projects/rentivo/ terraform/main.tf terraform/outputs.tf
 git commit -m "feat(tf): port rentivo cloudflare records (DKIM wired to SES output)"
 ```
@@ -899,13 +899,13 @@ Use Edit on `terraform/outputs.tf`:
 
 - [ ] **Step 6: Verify**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/projects/jorgejunior/ terraform/main.tf terraform/outputs.tf
 git commit -m "feat(tf): add jorgejunior project (jorgejunior.dev + j-jr.app)"
 ```
@@ -1060,13 +1060,13 @@ Use Edit on `terraform/outputs.tf`:
 
 - [ ] **Step 6: Verify**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/projects/eic-seminarios/ terraform/main.tf terraform/outputs.tf
 git commit -m "feat(tf): add eic-seminarios project (eic-seminarios.com)"
 ```
@@ -1221,13 +1221,13 @@ Use Edit on `terraform/outputs.tf`:
 
 - [ ] **Step 6: Verify**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add terraform/projects/joy-living/ terraform/main.tf terraform/outputs.tf
 git commit -m "feat(tf): add joy-living project (joyliving.com.br)"
 ```
@@ -1318,13 +1318,13 @@ Use Edit on `.github/workflows/terraform-apply.yml`:
 
 - [ ] **Step 3: Verify YAML parses**
 
-Run: `python3 -c "import yaml; yaml.safe_load(open('/Users/j/src/jorgejr568/aws-resources/.github/workflows/terraform-plan.yml')); yaml.safe_load(open('/Users/j/src/jorgejr568/aws-resources/.github/workflows/terraform-apply.yml')); print('OK')"`
+Run: `python3 -c "import yaml; yaml.safe_load(open('<repo-root>/.github/workflows/terraform-plan.yml')); yaml.safe_load(open('<repo-root>/.github/workflows/terraform-apply.yml')); print('OK')"`
 Expected: `OK`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add .github/workflows/terraform-plan.yml .github/workflows/terraform-apply.yml
 git commit -m "ci: pass cloudflare token + server IPs + account id to terraform"
 ```
@@ -1339,17 +1339,17 @@ These checks confirm the new code is internally consistent before we ask CI to a
 
 - [ ] **Step 1: Confirm clean tree**
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources status`
+Run: `git -C <repo-root> status`
 Expected: `nothing to commit, working tree clean`.
 
 - [ ] **Step 2: `terraform fmt -check`**
 
-Run: `cd /Users/j/src/jorgejr568/aws-resources/terraform && terraform fmt -check -recursive`
+Run: `cd <repo-root>/terraform && terraform fmt -check -recursive`
 Expected: exit 0.
 
 - [ ] **Step 3: Project layout sanity check**
 
-Run: `ls /Users/j/src/jorgejr568/aws-resources/terraform/projects/`
+Run: `ls <repo-root>/terraform/projects/`
 Expected (alphabetical):
 ```
 eic-seminarios
@@ -1365,7 +1365,7 @@ There is **no** `vista-da-montanha/` directory — that domain is no longer owne
 
 Run:
 ```bash
-for d in /Users/j/src/jorgejr568/aws-resources/terraform/projects/*/; do
+for d in <repo-root>/terraform/projects/*/; do
   echo "== $d =="
   ls "$d"
 done
@@ -1381,7 +1381,7 @@ Expected:
 
 Run:
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources/terraform
+cd <repo-root>/terraform
 terraform init -backend=false -input=false
 terraform validate
 ```
@@ -1391,10 +1391,10 @@ Expected: `Success! The configuration is valid.` If validation reports any error
 
 This is the audit that catches silently-dropped records. For each Pulumi source file, count records and compare.
 
-Run: `grep -rE 'createAddressRecordsToServer|createCnameRecord|createMxRecord|createTxtRecord|createVercelCname' /Users/j/src/jorgejr568/aws-resources/cloudflare-resources/records/ | wc -l`
+Run: `grep -rE 'createAddressRecordsToServer|createCnameRecord|createMxRecord|createTxtRecord|createVercelCname' <repo-root>/cloudflare-resources/records/ | wc -l`
 Note this number — it's a rough count of Pulumi record-creation call sites (each `createAddressRecordsToServer` produces 2 records (A+AAAA), each other helper produces 1).
 
-Run: `grep -rE 'resource "cloudflare_record"' /Users/j/src/jorgejr568/aws-resources/terraform/projects/ | wc -l`
+Run: `grep -rE 'resource "cloudflare_record"' <repo-root>/terraform/projects/ | wc -l`
 This counts Terraform `cloudflare_record` blocks. Each block with `for_each` expands per element.
 
 These counts will not match exactly (loops vs. literal), so the validation here is by-zone manual review:
@@ -1403,7 +1403,7 @@ These counts will not match exactly (loops vs. literal), so the validation here 
 - `jorge-junior-dev-records.go`: 16×2 + 3 MX = 35 → Terraform: `jorgejunior_dev_a` (16) + `jorgejunior_dev_aaaa` (16) + `jorgejunior_dev_mx` (3) = 35 ✓
 - `j-jr-app-records.go`: 8×2 + 2 CNAME = 18 → Terraform: `j_jr_app_a` (8) + `j_jr_app_aaaa` (8) + `j_jr_app_vercel` (2) = 18 ✓
 - `eic-seminarios-records.go`: 1×2 = 2 → Terraform: `eic_seminarios_a` (1) + `eic_seminarios_aaaa` (1) = 2 ✓
-- `vista-da-montanha-com-br-records.go`: **NOT PORTED** (3 records) — domain no longer owned. Confirm there is no `vista_da_montanha` resource anywhere: `grep -r vista_da_montanha /Users/j/src/jorgejr568/aws-resources/terraform/` should return no results.
+- `vista-da-montanha-com-br-records.go`: **NOT PORTED** (3 records) — domain no longer owned. Confirm there is no `vista_da_montanha` resource anywhere: `grep -r vista_da_montanha <repo-root>/terraform/` should return no results.
 - `joy-living-records.go`: 3×2 = 6 → Terraform: `joy_living_a` (3) + `joy_living_aaaa` (3) = 6 ✓
 
 **Grand total: 75 records.** If `terraform plan` (run by CI on the cutover PR) reports a different create count, something was missed.
@@ -1490,7 +1490,7 @@ gh repo archive jorgejr568/cloudflare-resources
 
 # Optional: rename this repo
 gh repo rename infra-resources -R jorgejr568/aws-resources
-git -C /Users/j/src/jorgejr568/aws-resources remote set-url origin git@github.com:jorgejr568/infra-resources.git
+git -C <repo-root> remote set-url origin git@github.com:jorgejr568/infra-resources.git
 ```
 
 ## Rollback plan
@@ -1504,7 +1504,7 @@ If `terraform apply` fails partway through:
 - [ ] **Step 2: Commit the runbook**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add docs/superpowers/plans/2026-04-30-cutover-runbook.md
 git commit -m "docs: add cutover runbook for pulumi -> terraform migration"
 ```
@@ -1519,7 +1519,7 @@ git commit -m "docs: add cutover runbook for pulumi -> terraform migration"
 
 - [ ] **Step 1: Rewrite README**
 
-Use Write to overwrite `/Users/j/src/jorgejr568/aws-resources/README.md`:
+Use Write to overwrite `<repo-root>/README.md`:
 
 ```markdown
 # infra-resources
@@ -1667,7 +1667,7 @@ Expected: updated Purpose, expanded `cloudflare.tf` row, six projects listed.
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add README.md docs/ARCHITECTURE.md
 git commit -m "docs: rewrite README and ARCHITECTURE for combined AWS + Cloudflare repo"
 ```
@@ -1683,29 +1683,29 @@ This is the *last* code task. Doing it earlier would lose the spec we're porting
 
 - [ ] **Step 1: Confirm we're caught up**
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources status --short`
+Run: `git -C <repo-root> status --short`
 Expected: clean.
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources log --oneline -15`
+Run: `git -C <repo-root> log --oneline -15`
 Expected: 11 fresh commits from Tasks 1–12 above (one per task, except Task 10 which is verify-only).
 
 - [ ] **Step 2: Remove the directory**
 
-Run: `rm -rf /Users/j/src/jorgejr568/aws-resources/cloudflare-resources`
+Run: `rm -rf <repo-root>/cloudflare-resources`
 Expected: exit 0.
 
 - [ ] **Step 3: Verify**
 
-Run: `test -d /Users/j/src/jorgejr568/aws-resources/cloudflare-resources && echo "STILL THERE" || echo "gone"`
+Run: `test -d <repo-root>/cloudflare-resources && echo "STILL THERE" || echo "gone"`
 Expected: `gone`.
 
-Run: `git -C /Users/j/src/jorgejr568/aws-resources status --short | head -20`
+Run: `git -C <repo-root> status --short | head -20`
 Expected: many lines starting with ` D cloudflare-resources/...` (deleted, staged for removal once `git add -u` runs).
 
 - [ ] **Step 4: Commit the deletion**
 
 ```bash
-cd /Users/j/src/jorgejr568/aws-resources
+cd <repo-root>
 git add -u cloudflare-resources/
 git rm -r --cached cloudflare-resources/ 2>/dev/null || true
 git status --short
@@ -1719,7 +1719,7 @@ Expected: clean tree.
 
 - [ ] **Step 5: Final layout check**
 
-Run: `ls /Users/j/src/jorgejr568/aws-resources/`
+Run: `ls <repo-root>/`
 Expected: `.github/  .gitignore  .tool-versions  README.md  docs/  scripts/  terraform/` — no `cloudflare-resources/`.
 
 ---
