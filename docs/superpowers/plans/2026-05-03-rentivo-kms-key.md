@@ -36,7 +36,7 @@ Terraform doesn't have unit tests; the equivalent loop is:
 
 We treat **a clean `terraform validate`** as the unit-level pass and **the CI plan diff** as the integration-level pass.
 
-All shell commands in this plan are run from `/Users/j/src/jorgejr568/infra-resources/terraform` unless noted.
+All shell commands in this plan are run from `<repo-root>/terraform` unless noted.
 
 ---
 

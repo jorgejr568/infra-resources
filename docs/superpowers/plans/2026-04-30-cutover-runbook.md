@@ -69,7 +69,7 @@ gh repo archive jorgejr568/cloudflare-resources
 
 # Optional: rename this repo
 gh repo rename infra-resources -R jorgejr568/aws-resources
-git -C /Users/j/src/jorgejr568/aws-resources remote set-url origin git@github.com:jorgejr568/infra-resources.git
+git -C <repo-root> remote set-url origin git@github.com:jorgejr568/infra-resources.git
 ```
 
 ## Rollback plan
