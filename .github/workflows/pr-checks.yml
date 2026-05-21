@@ -83,11 +83,29 @@ jobs:
         env:
           PLAN_EXIT: ${{ steps.plan.outputs.exitcode }}
           FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          REDACT_SERVER_IPV4: ${{ secrets.SERVER_IPV4 }}
+          REDACT_SERVER_IPV6: ${{ secrets.SERVER_IPV6 }}
+          REDACT_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
           script: |
             const fs = require('fs');
             let plan = '(no plan output)';
             try { plan = fs.readFileSync('terraform/plan.txt', 'utf8'); } catch (_) {}
+
+            // GitHub auto-masks secrets in step logs, but NOT in content posted
+            // back via the issues API. Strip known secret values out of the
+            // plan text before it becomes a public PR comment.
+            const redactions = [
+              ['REDACT_SERVER_IPV4',           '***SERVER_IPV4***'],
+              ['REDACT_SERVER_IPV6',           '***SERVER_IPV6***'],
+              ['REDACT_CLOUDFLARE_ACCOUNT_ID', '***CLOUDFLARE_ACCOUNT_ID***'],
+            ];
+            for (const [envName, placeholder] of redactions) {
+              const value = process.env[envName];
+              if (value && value.length > 0) {
+                plan = plan.split(value).join(placeholder);
+              }
+            }
 
             // Split plan output into the noisy refresh-state preamble and
             // the actual plan summary, so the comment can show the summary
