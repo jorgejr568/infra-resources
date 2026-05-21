@@ -87,6 +87,17 @@ output "j_jr_app_zone_id" {
   value       = module.jorgejunior.j_jr_app_zone_id
 }
 
+output "jorgejunior_portfolio_turnstile_sitekey" {
+  description = "Cloudflare Turnstile sitekey for the jorgejunior.dev portfolio (embed in HTML)."
+  value       = module.jorgejunior.jorgejunior_portfolio_turnstile_sitekey
+}
+
+output "jorgejunior_portfolio_turnstile_secret" {
+  description = "Cloudflare Turnstile secret for the jorgejunior.dev portfolio (used by the verification endpoint)."
+  value       = module.jorgejunior.jorgejunior_portfolio_turnstile_secret
+  sensitive   = true
+}
+
 output "eic_seminarios_zone_id" {
   description = "Cloudflare zone ID for eic-seminarios.com."
   value       = module.eic_seminarios.eic_seminarios_zone_id
