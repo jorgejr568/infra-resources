@@ -120,14 +120,14 @@ The CI user is **not** the same as any project's service account (e.g. `hooks-fy
 > **Future work:** Replace the CI access keys with GitHub OIDC + an IAM role (`role-to-assume`). This eliminates long-lived secrets.
 
 ### Cloudflare authentication
-| Secret / Var | Purpose |
-|--------------|---------|
-| `CLOUDFLARE_API_TOKEN` (secret)    | Cloudflare API token consumed by the cloudflare provider |
-| `SERVER_IPV4` (var)                | Origin IPv4 used by all proxied A records |
-| `SERVER_IPV6` (var)                | Origin IPv6 used by all proxied AAAA records |
-| `CLOUDFLARE_ACCOUNT_ID` (var)      | Cloudflare account ID used by account-scoped resources (Turnstile) |
+| Secret | Purpose |
+|--------|---------|
+| `CLOUDFLARE_API_TOKEN`    | Cloudflare API token consumed by the cloudflare provider |
+| `SERVER_IPV4`             | Origin IPv4 sitting behind the Cloudflare proxy (used as A-record content by the proxied subdomain module) |
+| `SERVER_IPV6`             | Origin IPv6 sitting behind the Cloudflare proxy (used as AAAA-record content) |
+| `CLOUDFLARE_ACCOUNT_ID`   | Cloudflare account ID, used by account-scoped resources (Turnstile) |
 
-These are surfaced to Terraform via `TF_VAR_*` env in the workflows. The values are not sensitive (server IPs are published in DNS) but live outside the repo to avoid hardcoding environment-specific values.
+All four are stored as **GitHub Actions secrets** (not variables) and surfaced to Terraform via `TF_VAR_*` env in the workflows. This repo is public, so anything passed as a variable would be plaintext in workflow run logs — and the origin IPs in particular are sensitive: Cloudflare proxies the A/AAAA records (`proxied = true`), so the published DNS resolves to Cloudflare edge IPs, not these values. Leaking the origin IPs would let attackers bypass the Cloudflare WAF/DDoS layer and hit the origin server directly.
 
 ## CI/CD flows
 
