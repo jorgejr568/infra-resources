@@ -25,8 +25,9 @@ module "rentivo" {
 module "jorgejunior" {
   source = "./projects/jorgejunior"
 
-  server_ipv4 = var.server_ipv4
-  server_ipv6 = var.server_ipv6
+  server_ipv4           = var.server_ipv4
+  server_ipv6           = var.server_ipv6
+  cloudflare_account_id = var.cloudflare_account_id
 
   providers = {
     cloudflare = cloudflare
