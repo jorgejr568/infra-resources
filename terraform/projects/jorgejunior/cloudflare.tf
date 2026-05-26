@@ -56,6 +56,7 @@ module "cf_proxied_jorgejunior_dev" {
     "flux",
     "vscode",
     "land",
+    "organizze-mcp",
   ])
   ipv4 = var.server_ipv4
   ipv6 = var.server_ipv6
