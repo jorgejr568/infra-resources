@@ -48,6 +48,19 @@ provider "aws" {
   }
 }
 
+provider "aws" {
+  alias  = "eic_seminarios"
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      ManagedBy = "terraform"
+      Repo      = "aws-resources"
+      Project   = "eic-seminarios"
+    }
+  }
+}
+
 provider "cloudflare" {
   # API token comes from CLOUDFLARE_API_TOKEN env var in CI; no per-project
   # alias because Cloudflare has no provider-level tagging concept.

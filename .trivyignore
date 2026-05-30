@@ -4,3 +4,21 @@
 # infra with no compliance requirement for customer-managed KMS keys; the
 # per-CMK monthly cost and per-request KMS calls aren't justified here.
 AVD-AWS-0132
+
+# guide.eic-seminarios.com is a deliberately PUBLIC static-website bucket
+# (origin for the guide CloudFront distribution). Its public-access-block is
+# intentionally permissive and a public-read bucket policy is required, so the
+# four S3 public-access checks below are expected and suppressed for this repo.
+# AVD-AWS-0086: public access block does not block public ACLs.
+AVD-AWS-0086
+# AVD-AWS-0087: public access block does not block public policies.
+AVD-AWS-0087
+# AVD-AWS-0091: public access block does not ignore public ACLs.
+AVD-AWS-0091
+# AVD-AWS-0093: public access block does not restrict public buckets.
+AVD-AWS-0093
+
+# AVD-AWS-0011: the guide CloudFront distribution has no WAF — it serves a
+# public, static documentation site with no sensitive data; a WAF web ACL's
+# monthly cost isn't justified for this personal-infra use case.
+AVD-AWS-0011
