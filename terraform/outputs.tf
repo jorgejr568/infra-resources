@@ -103,6 +103,38 @@ output "eic_seminarios_zone_id" {
   value       = module.eic_seminarios.eic_seminarios_zone_id
 }
 
+output "eic_seminarios_bucket" {
+  description = "Name of the private eic-seminarios application bucket."
+  value       = module.eic_seminarios.eic_seminarios_bucket
+}
+
+output "eic_seminarios_guide_bucket" {
+  description = "Name of the public guide static-website bucket."
+  value       = module.eic_seminarios.guide_bucket
+}
+
+output "eic_seminarios_guide_distribution_id" {
+  description = "CloudFront distribution ID serving guide.eic-seminarios.com."
+  value       = module.eic_seminarios.guide_distribution_id
+}
+
+output "eic_seminarios_dkim_tokens" {
+  description = "SES DKIM tokens for eic-seminarios.com (publish three CNAMEs: <token>._domainkey.eic-seminarios.com -> <token>.dkim.amazonses.com)."
+  value       = module.eic_seminarios.eic_seminarios_dkim_tokens
+}
+
+output "eic_seminarios_guide_uploader_access_key_id" {
+  description = "Access key ID for the eic-seminarios guide-uploader user."
+  value       = module.eic_seminarios.guide_uploader_access_key_id
+  sensitive   = true
+}
+
+output "eic_seminarios_guide_uploader_secret_access_key" {
+  description = "Secret access key for the eic-seminarios guide-uploader user."
+  value       = module.eic_seminarios.guide_uploader_secret_access_key
+  sensitive   = true
+}
+
 output "joy_living_zone_id" {
   description = "Cloudflare zone ID for joyliving.com.br."
   value       = module.joy_living.joy_living_zone_id
