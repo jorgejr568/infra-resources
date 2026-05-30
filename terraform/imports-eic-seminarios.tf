@@ -59,3 +59,16 @@ import {
   to = module.eic_seminarios.aws_cloudfront_distribution.guide
   id = "E34WTTE9HV683E"
 }
+
+import {
+  to = module.eic_seminarios.aws_sesv2_email_identity.eic_seminarios
+  id = "eic-seminarios.com"
+}
+import {
+  to = module.eic_seminarios.aws_sesv2_email_identity_mail_from_attributes.eic_seminarios
+  id = "eic-seminarios.com"
+}
+import {
+  to = module.eic_seminarios.aws_sesv2_email_identity.no_reply
+  id = "no-reply@eic-seminarios.com"
+}
