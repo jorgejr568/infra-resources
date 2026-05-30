@@ -67,11 +67,12 @@ resource "aws_iam_user_policy_attachment" "eic_seminarios_ses" {
   policy_arn = aws_iam_policy.eic_seminarios_ses.arn
 }
 
-# Two existing access keys, imported. AWS never returns a key's secret on
-# import, so the secret for the 2024-10 key was injected into state manually
-# (the value the operator still held); it is surfaced via the outputs below.
+# Active access key for the service user. Imported; AWS never returns a key's
+# secret on import, so the secret was injected into state manually (the value
+# the operator still held) and is surfaced via the outputs below. (The unused
+# 2026-01 key AKIA2UC3A2NZQRMLBG3Q was removed.)
 resource "aws_iam_access_key" "eic_seminarios" {
-  for_each = toset(["2026-01", "2024-10"])
+  for_each = toset(["2024-10"])
   user     = aws_iam_user.eic_seminarios.name
 }
 
