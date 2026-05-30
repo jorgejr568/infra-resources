@@ -135,6 +135,18 @@ output "eic_seminarios_guide_uploader_secret_access_key" {
   sensitive   = true
 }
 
+output "eic_seminarios_access_key_id" {
+  description = "Access key ID for the eic-seminarios service user (2024-10 key)."
+  value       = module.eic_seminarios.eic_seminarios_access_key_id
+  sensitive   = true
+}
+
+output "eic_seminarios_access_key_secret" {
+  description = "Secret access key for the eic-seminarios service user (2024-10 key)."
+  value       = module.eic_seminarios.eic_seminarios_access_key_secret
+  sensitive   = true
+}
+
 output "joy_living_zone_id" {
   description = "Cloudflare zone ID for joyliving.com.br."
   value       = module.joy_living.joy_living_zone_id

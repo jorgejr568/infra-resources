@@ -67,10 +67,24 @@ resource "aws_iam_user_policy_attachment" "eic_seminarios_ses" {
   policy_arn = aws_iam_policy.eic_seminarios_ses.arn
 }
 
-# Two existing access keys, imported (secrets retained by the user; not output).
+# Two existing access keys, imported. AWS never returns a key's secret on
+# import, so the secret for the 2024-10 key was injected into state manually
+# (the value the operator still held); it is surfaced via the outputs below.
 resource "aws_iam_access_key" "eic_seminarios" {
   for_each = toset(["2026-01", "2024-10"])
   user     = aws_iam_user.eic_seminarios.name
+}
+
+output "eic_seminarios_access_key_id" {
+  description = "Access key ID for the eic-seminarios service user (the 2024-10 key)."
+  value       = aws_iam_access_key.eic_seminarios["2024-10"].id
+  sensitive   = true
+}
+
+output "eic_seminarios_access_key_secret" {
+  description = "Secret access key for the eic-seminarios service user (2024-10 key). Injected into state from the operator-held value; readable from state only."
+  value       = aws_iam_access_key.eic_seminarios["2024-10"].secret
+  sensitive   = true
 }
 
 # Guide deploy user: write to the guide bucket + invalidate the CloudFront dist.
