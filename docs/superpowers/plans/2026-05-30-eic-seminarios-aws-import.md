@@ -14,12 +14,14 @@
 
 ## Definition of done (the target `terraform plan`)
 
-After all tasks, `terraform plan` (run with the env from "Prerequisites") must show **only** this action set and nothing else:
+After all tasks, `terraform plan` (run with the env from "Prerequisites") must show **only** this action set — `Plan: 24 to import, 4 to add, 9 to change, 0 to destroy`:
 
-- **All imported resources: 0 changes** (config matches live state).
+- **24 imports** (11 S3 + 3 CloudFront/ACM + 3 SES + 7 IAM), all matching live config.
 - **Creates (4):** SES config set `eic-seminarios`, its event destination `eic-seminarios-ses-dashboard`, the fresh guide-uploader access key, and `aws_acm_certificate_validation.guide` (a synthetic resource with no cloud object — it just records that the already-issued cert is validated).
-- **Updates (2):** the two SES identities re-pointing their default configuration set from `my-first-configuration-set` to `eic-seminarios`.
+- **Changes (9):** the two SES identities re-pointing their default configuration set from `my-first-configuration-set` to `eic-seminarios`, **plus** seven previously-untagged resources picking up the provider `default_tags` (`ManagedBy`/`Repo`/`Project`) on first apply: both S3 buckets, the ACM cert, the CloudFront distribution, the managed IAM policy, and the two IAM users. These tag additions are intended (consistency with the rest of the repo) and one-time.
 - **No replaces. No destroys. No drift on any other project.**
+
+> Every change must be **only** a `tags_all` addition, except the two SES identities which also flip `configuration_set_name`. If any imported resource shows a different attribute changing, fix the HCL before proceeding.
 
 CloudFront and S3 imports are config-sensitive; expect to iterate the HCL until the plan is clean. That iteration *is* the work — don't accept a plan that wants to change an imported resource.
 
@@ -803,9 +805,10 @@ git commit -m "feat(eic-seminarios): import IAM users and policies; rotate guide
 - [ ] **Step 1: Run the full local plan and confirm it matches "Definition of done"**
 
 Run: `terraform plan -no-color -input=false`
-Expected summary line: `Plan: 4 to add, 2 to change, 0 to destroy. 24 to import.`
-(4 add = config set, event destination, guide key, acm validation. 2 change = the two SES identity config-set updates. 24 import = 11 S3 + 3 CloudFront/ACM + 3 SES + 7 IAM.)
-If the counts differ or any imported resource shows a change, return to the relevant task and fix the HCL.
+Expected summary line: `Plan: 24 to import, 4 to add, 9 to change, 0 to destroy.` (See "Definition of done" for the breakdown — 4 creates, 9 changes that are tag-only except the two SES identity config-set flips.)
+If the counts differ or any imported resource shows a non-tag/non-config-set change, return to the relevant task and fix the HCL.
+
+> **Local note:** the personal Cloudflare token can't read the unrelated `jorgejunior` Turnstile widget, so a full local `plan` errors there. Iterate locally with `-target=module.eic_seminarios -lock=false`; the authoritative full plan runs in CI (Task 7) with the privileged token.
 
 - [ ] **Step 2: Run Trivy and capture intentional HIGH/CRITICAL findings**
 
