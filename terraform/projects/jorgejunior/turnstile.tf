@@ -1,9 +1,11 @@
 resource "cloudflare_turnstile_widget" "portfolio" {
   account_id = var.cloudflare_account_id
   name       = "jorgejunior.dev portfolio"
-  domains    = ["jorgejunior.dev", "www.jorgejunior.dev", "me.jorgejunior.dev"]
-  mode       = "managed"
-  region     = "world"
+  # Ordered to match the order Cloudflare's API returns (alphabetical), so plans
+  # don't perpetually show a no-op reordering diff.
+  domains = ["jorgejunior.dev", "me.jorgejunior.dev", "www.jorgejunior.dev"]
+  mode    = "managed"
+  region  = "world"
 }
 
 output "jorgejunior_portfolio_turnstile_sitekey" {
