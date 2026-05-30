@@ -83,7 +83,7 @@ account/default-level attribute the `~> 6.0` provider does not model on
   - `AKIA2UC3A2NZQRMLBG3Q` (2026-01-15)
   - `AKIA2UC3A2NZTNO5HVHT` (2024-10-18)
   - Imported, not created → no `secret`/`ses_smtp_password` outputs (you already hold
-    them). The 2024 key is kept as-is; prune as a future cleanup if confirmed unused.
+    them). Both keys are kept; `AKIA2UC3A2NZTNO5HVHT` (2024) stays — no cleanup planned.
 
 **User `eic-seminarios-guide-uploader`** (path `/`):
 - `aws_iam_user`
@@ -165,7 +165,6 @@ account/default-level attribute the `~> 6.0` provider does not model on
 
 - Delete old guide-uploader key `AKIA2UC3A2NZ3WOIMLGE` after the guide deploy is
   updated with the new TF-managed key.
-- Optional prune of the 2024 main key `AKIA2UC3A2NZTNO5HVHT` if confirmed unused.
 - SES `my-first-configuration-set` remains externally managed.
 - SES/DKIM/MAIL-FROM DNS records remain manually managed in Cloudflare (matches rentivo).
 
