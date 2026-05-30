@@ -41,6 +41,7 @@ module "eic_seminarios" {
   server_ipv6 = var.server_ipv6
 
   providers = {
+    aws        = aws.eic_seminarios
     cloudflare = cloudflare
   }
 }
