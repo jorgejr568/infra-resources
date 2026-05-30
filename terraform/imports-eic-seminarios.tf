@@ -72,3 +72,32 @@ import {
   to = module.eic_seminarios.aws_sesv2_email_identity.no_reply
   id = "no-reply@eic-seminarios.com"
 }
+
+import {
+  to = module.eic_seminarios.aws_iam_user.eic_seminarios
+  id = "eic-seminarios"
+}
+import {
+  to = module.eic_seminarios.aws_iam_policy.eic_seminarios_ses
+  id = "arn:aws:iam::730335335283:policy/eic-seminarios-ses"
+}
+import {
+  to = module.eic_seminarios.aws_iam_user_policy_attachment.eic_seminarios_ses
+  id = "eic-seminarios/arn:aws:iam::730335335283:policy/eic-seminarios-ses"
+}
+import {
+  to = module.eic_seminarios.aws_iam_access_key.eic_seminarios["2026-01"]
+  id = "AKIA2UC3A2NZQRMLBG3Q"
+}
+import {
+  to = module.eic_seminarios.aws_iam_access_key.eic_seminarios["2024-10"]
+  id = "AKIA2UC3A2NZTNO5HVHT"
+}
+import {
+  to = module.eic_seminarios.aws_iam_user.guide_uploader
+  id = "eic-seminarios-guide-uploader"
+}
+import {
+  to = module.eic_seminarios.aws_iam_user_policy.guide_sync
+  id = "eic-seminarios-guide-uploader:S3GuideSync"
+}
