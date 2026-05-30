@@ -21,9 +21,15 @@ domain is verified, and the IAM keys are live. We use Terraform 1.10 native
 in `plan`, runs on the first `apply`, and the blocks are deleted in a follow-up commit
 once state is established.
 
-**Definition of done:** `terraform plan` reports only the imports with **zero resource
-changes** (no create/update/replace/destroy) — i.e. the config exactly matches live
-state.
+**Definition of done:** `terraform plan` shows **only the intended set of actions** and
+nothing else:
+- All imported resources show **0 changes** (config exactly matches live state).
+- **2 creates**: the new SES config set `eic-seminarios` + its event destination.
+- **1 create**: the fresh guide-uploader access key.
+- **2 updates**: the two SES identities re-pointing their default config set to
+  `eic-seminarios`.
+
+No replaces or destroys anywhere. Iterate config until the plan matches exactly this.
 
 ## Provider wiring
 
@@ -103,23 +109,36 @@ the v2 (`aws_sesv2_*`) resources, so this project uses v2 throughout for SES rat
 rentivo's v1 (`aws_ses_domain_identity`). DNS records (DKIM CNAMEs, MAIL FROM, domain
 verification) already exist in Cloudflare and remain manually managed, same as rentivo.
 
-- `aws_sesv2_configuration_set` `main` → name `my-first-configuration-set`,
+**New config set, not the default.** The live identities currently default to
+`my-first-configuration-set` — the console-generated default. Instead of adopting that,
+we **create a new, project-named config set** with identical settings and re-point the
+identities at it. This gives us a clean, owned config set that can be evolved/swapped
+deliberately later. The old `my-first-configuration-set` is left in AWS, unmanaged.
+
+- `aws_sesv2_configuration_set` `main` → **created** with name `eic-seminarios`,
   `reputation_options { reputation_metrics_enabled = true }`,
   `sending_options { sending_enabled = true }`
-- `aws_sesv2_configuration_set_event_destination` `dashboard` → name
+- `aws_sesv2_configuration_set_event_destination` `dashboard` → **created**, name
   `eic-seminarios-ses-dashboard`, enabled, all event types
   (`SEND`,`REJECT`,`BOUNCE`,`COMPLAINT`,`DELIVERY`,`OPEN`,`CLICK`,`RENDERING_FAILURE`,`DELIVERY_DELAY`),
   `cloud_watch_destination` with one `dimension_configuration`
   (`dimension_name = "origin"`, `dimension_value_source = "MESSAGE_TAG"`,
   `default_dimension_value = "eic-seminarios-ses"`)
-- `aws_sesv2_email_identity` `eic_seminarios` → `email_identity = "eic-seminarios.com"`,
+- `aws_sesv2_email_identity` `eic_seminarios` → imported (`email_identity = "eic-seminarios.com"`),
   `configuration_set_name = aws_sesv2_configuration_set.main.configuration_set_name`
-  (Easy DKIM, AWS_SES origin — DKIM tokens read as computed)
-- `aws_sesv2_email_identity_mail_from_attributes` `eic_seminarios` →
+  → **updates** the identity's default config set from `my-first-configuration-set` to
+  `eic-seminarios` on apply. (Easy DKIM, AWS_SES origin — DKIM tokens read as computed.)
+- `aws_sesv2_email_identity_mail_from_attributes` `eic_seminarios` → imported,
   `mail_from_domain = "ses.eic-seminarios.com"`, `behavior_on_mx_failure = "USE_DEFAULT_VALUE"`
-- `aws_sesv2_email_identity` `no_reply` → `email_identity = "no-reply@eic-seminarios.com"`,
+- `aws_sesv2_email_identity` `no_reply` → imported (`email_identity = "no-reply@eic-seminarios.com"`),
   `configuration_set_name = aws_sesv2_configuration_set.main.configuration_set_name`
+  → same default-config-set update on apply.
 - Output: DKIM tokens (informational; DNS stays manual in Cloudflare).
+
+**Caveat (app-level):** this swaps only the *identity default* config set. If the
+application passes `ConfigurationSetName` explicitly in its SES send calls, that string
+must be updated to `eic-seminarios` in the app separately — the default only applies to
+sends that don't specify one.
 
 ### `cloudfront.tf` (+ ACM, fully managed incl. Cloudflare validation)
 
@@ -165,8 +184,6 @@ verification) already exist in Cloudflare and remain manually managed, same as r
 | `aws_iam_access_key.eic_seminarios["2024"]` | `AKIA2UC3A2NZTNO5HVHT` |
 | `aws_iam_user.guide_uploader` | `eic-seminarios-guide-uploader` |
 | `aws_iam_user_policy.guide_sync` | `eic-seminarios-guide-uploader:S3GuideSync` |
-| `aws_sesv2_configuration_set.main` | `my-first-configuration-set` |
-| `aws_sesv2_configuration_set_event_destination.dashboard` | `my-first-configuration-set\|eic-seminarios-ses-dashboard` |
 | `aws_sesv2_email_identity.eic_seminarios` | `eic-seminarios.com` |
 | `aws_sesv2_email_identity_mail_from_attributes.eic_seminarios` | `eic-seminarios.com` |
 | `aws_sesv2_email_identity.no_reply` | `no-reply@eic-seminarios.com` |
@@ -174,18 +191,24 @@ verification) already exist in Cloudflare and remain manually managed, same as r
 | `cloudflare_dns_record.acm_guide_validation` | `a0cad208e1aacc23ef78414b46d22cb9/deaf1e1a1a78b7bde7bde2a3478067f1` |
 | `aws_cloudfront_distribution.guide` | `E34WTTE9HV683E` |
 
-(`aws_iam_access_key` for the guide uploader is **created**, not imported.)
+**Created** (not imported): the guide-uploader `aws_iam_access_key`, the SES
+`aws_sesv2_configuration_set.main` (`eic-seminarios`), and its
+`aws_sesv2_configuration_set_event_destination.dashboard`.
 
 ## Out of scope / follow-ups
 
 - Delete old guide-uploader key `AKIA2UC3A2NZ3WOIMLGE` after the guide deploy is
   updated with the new TF-managed key.
 - SES/DKIM/MAIL-FROM DNS records remain manually managed in Cloudflare (matches rentivo).
+- Old default SES config set `my-first-configuration-set` left in AWS, unmanaged;
+  delete it once nothing sends through it. Also update the app if it passes that name
+  explicitly (see SES caveat).
 
 ## Verification
 
 1. `terraform init` (downloads aws provider for the new alias).
-2. `terraform plan` → expect imports + **0 changes**. Iterate config until clean.
+2. `terraform plan` → expect the exact action set in "Definition of done" (imports with
+   0 changes, plus the 3 creates and 2 SES-identity updates). Iterate config until clean.
 3. `terraform validate` + `tflint` + pre-commit hooks pass.
 4. Merge → CI `apply` performs the imports and creates the one new guide-uploader key.
 5. Post-apply: retrieve new guide key from state output, update guide deploy, delete old key.
