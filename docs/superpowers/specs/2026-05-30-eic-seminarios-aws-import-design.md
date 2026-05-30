@@ -96,17 +96,30 @@ account/default-level attribute the `~> 6.0` provider does not model on
   the guide deploy is updated with the new credentials. (IAM allows 2 keys/user, so
   old + new coexist until cleanup.)
 
-### `ses.tf` (matches the rentivo convention: manage identities, output tokens, DNS stays manual)
+### `ses.tf` (SESv2 — diverges from rentivo's v1 convention; see note)
 
-- `aws_ses_domain_identity` `eic-seminarios.com`
-- `aws_ses_domain_dkim` for it (3 existing tokens)
-- `aws_ses_domain_mail_from` → `ses.eic-seminarios.com`, `behavior_on_mx_failure = "UseDefaultValue"`
-- `aws_ses_email_identity` `no-reply@eic-seminarios.com`
-- Outputs: verification token, DKIM tokens (informational; DNS records already exist
-  in Cloudflare and remain manually managed, exactly like rentivo).
-- **Not managed:** the `my-first-configuration-set` default association. v1 SES
-  resources do not track configuration-set association, so it causes no plan drift; it
-  stays externally managed.
+The configuration set and its association to the identities can only be expressed with
+the v2 (`aws_sesv2_*`) resources, so this project uses v2 throughout for SES rather than
+rentivo's v1 (`aws_ses_domain_identity`). DNS records (DKIM CNAMEs, MAIL FROM, domain
+verification) already exist in Cloudflare and remain manually managed, same as rentivo.
+
+- `aws_sesv2_configuration_set` `main` → name `my-first-configuration-set`,
+  `reputation_options { reputation_metrics_enabled = true }`,
+  `sending_options { sending_enabled = true }`
+- `aws_sesv2_configuration_set_event_destination` `dashboard` → name
+  `eic-seminarios-ses-dashboard`, enabled, all event types
+  (`SEND`,`REJECT`,`BOUNCE`,`COMPLAINT`,`DELIVERY`,`OPEN`,`CLICK`,`RENDERING_FAILURE`,`DELIVERY_DELAY`),
+  `cloud_watch_destination` with one `dimension_configuration`
+  (`dimension_name = "origin"`, `dimension_value_source = "MESSAGE_TAG"`,
+  `default_dimension_value = "eic-seminarios-ses"`)
+- `aws_sesv2_email_identity` `eic_seminarios` → `email_identity = "eic-seminarios.com"`,
+  `configuration_set_name = aws_sesv2_configuration_set.main.configuration_set_name`
+  (Easy DKIM, AWS_SES origin — DKIM tokens read as computed)
+- `aws_sesv2_email_identity_mail_from_attributes` `eic_seminarios` →
+  `mail_from_domain = "ses.eic-seminarios.com"`, `behavior_on_mx_failure = "USE_DEFAULT_VALUE"`
+- `aws_sesv2_email_identity` `no_reply` → `email_identity = "no-reply@eic-seminarios.com"`,
+  `configuration_set_name = aws_sesv2_configuration_set.main.configuration_set_name`
+- Output: DKIM tokens (informational; DNS stays manual in Cloudflare).
 
 ### `cloudfront.tf` (+ ACM, fully managed incl. Cloudflare validation)
 
@@ -117,8 +130,9 @@ account/default-level attribute the `~> 6.0` provider does not model on
   - name `_96edaf591a8248fcdf34a050fe98e34c.guide.eic-seminarios.com`
   - value `_22162c9f330487ff0020c1cd040af1da.jkddzztszm.acm-validations.aws`
   - type `CNAME`, unproxied
-  - Requires the existing Cloudflare record ID (looked up at implementation time with
-    the CF API token).
+  - Cloudflare zone `a0cad208e1aacc23ef78414b46d22cb9`, record
+    `deaf1e1a1a78b7bde7bde2a3478067f1` (ttl auto, unproxied). Import locally using the
+    token at `~/.personal-cloudflare-token`.
 - `aws_acm_certificate_validation` `guide` — references the cert ARN and the validation
   record FQDN. (No-op for an already-issued cert; included so the dependency graph is
   complete and re-validation works if the cert is ever recreated.)
@@ -151,12 +165,13 @@ account/default-level attribute the `~> 6.0` provider does not model on
 | `aws_iam_access_key.eic_seminarios["2024"]` | `AKIA2UC3A2NZTNO5HVHT` |
 | `aws_iam_user.guide_uploader` | `eic-seminarios-guide-uploader` |
 | `aws_iam_user_policy.guide_sync` | `eic-seminarios-guide-uploader:S3GuideSync` |
-| `aws_ses_domain_identity.eic_seminarios` | `eic-seminarios.com` |
-| `aws_ses_domain_dkim.eic_seminarios` | `eic-seminarios.com` |
-| `aws_ses_domain_mail_from.eic_seminarios` | `eic-seminarios.com` |
-| `aws_ses_email_identity.no_reply` | `no-reply@eic-seminarios.com` |
+| `aws_sesv2_configuration_set.main` | `my-first-configuration-set` |
+| `aws_sesv2_configuration_set_event_destination.dashboard` | `my-first-configuration-set\|eic-seminarios-ses-dashboard` |
+| `aws_sesv2_email_identity.eic_seminarios` | `eic-seminarios.com` |
+| `aws_sesv2_email_identity_mail_from_attributes.eic_seminarios` | `eic-seminarios.com` |
+| `aws_sesv2_email_identity.no_reply` | `no-reply@eic-seminarios.com` |
 | `aws_acm_certificate.guide` | `arn:aws:acm:us-east-1:730335335283:certificate/b36e7001-bbd0-443f-8acb-c84eadc0973b` |
-| `cloudflare_dns_record.acm_guide_validation` | `<zone_id>/<record_id>` (looked up) |
+| `cloudflare_dns_record.acm_guide_validation` | `a0cad208e1aacc23ef78414b46d22cb9/deaf1e1a1a78b7bde7bde2a3478067f1` |
 | `aws_cloudfront_distribution.guide` | `E34WTTE9HV683E` |
 
 (`aws_iam_access_key` for the guide uploader is **created**, not imported.)
@@ -165,7 +180,6 @@ account/default-level attribute the `~> 6.0` provider does not model on
 
 - Delete old guide-uploader key `AKIA2UC3A2NZ3WOIMLGE` after the guide deploy is
   updated with the new TF-managed key.
-- SES `my-first-configuration-set` remains externally managed.
 - SES/DKIM/MAIL-FROM DNS records remain manually managed in Cloudflare (matches rentivo).
 
 ## Verification
